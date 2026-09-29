@@ -20,7 +20,7 @@ async function sendMagicLink(email) {
   if (!supabaseReady) return { ok: false, message: 'Supabase no está configurado todavía.' }
   const { error } = await supabase.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: window.location.origin },
+    options: { emailRedirectTo: window.location.origin + import.meta.env.BASE_URL },
   })
   if (error) return { ok: false, message: error.message }
   return { ok: true, message: 'Te hemos enviado un enlace a ' + email + '. Ábrelo para entrar.' }
