@@ -16,14 +16,14 @@ if (supabaseReady) {
   ready.value = true
 }
 
-async function sendMagicLink(email) {
+async function signInWithGoogle() {
   if (!supabaseReady) return { ok: false, message: 'Supabase no está configurado todavía.' }
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo: window.location.origin + import.meta.env.BASE_URL },
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin + import.meta.env.BASE_URL },
   })
   if (error) return { ok: false, message: error.message }
-  return { ok: true, message: 'Te hemos enviado un enlace a ' + email + '. Ábrelo para entrar.' }
+  return { ok: true }
 }
 
 async function signOut() {
@@ -32,5 +32,5 @@ async function signOut() {
 }
 
 export function useAuth() {
-  return { session, ready, sendMagicLink, signOut }
+  return { session, ready, signInWithGoogle, signOut }
 }
