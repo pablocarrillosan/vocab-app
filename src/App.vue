@@ -61,10 +61,10 @@ const examTitle = computed(() => {
 </script>
 
 <template>
-  <div class="wrap">
-    <p v-if="!ready" class="hint">Cargando…</p>
+  <AuthView v-if="ready && !session" />
 
-    <AuthView v-else-if="!session" />
+  <div v-else class="wrap">
+    <p v-if="!ready" class="hint">Cargando…</p>
 
     <template v-else>
       <QuizView
