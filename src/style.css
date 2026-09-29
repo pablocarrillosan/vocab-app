@@ -39,6 +39,8 @@ h1{font-size:clamp(30px,6vw,44px);font-weight:700}
 .today h2{font-size:clamp(24px,5vw,34px)}
 .today .pv{font-family:var(--read);opacity:.85;margin:10px 0 18px;max-width:60ch}
 .btn{border:0;border-radius:12px;padding:12px 18px;font-weight:700;background:var(--reg);color:#fff}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.btn.small{padding:8px 12px;font-size:14px;border-radius:10px;flex-shrink:0}
 .btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--line)}
 .today .btn{background:var(--mark);color:#151a2d}
 .stats{display:flex;flex-wrap:wrap;gap:8px 28px;margin:18px 0 4px}

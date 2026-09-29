@@ -77,7 +77,10 @@ const examTitle = computed(() => {
       />
 
       <template v-else>
-        <h1>Mi vocabulario</h1>
+        <div class="top">
+          <h1>Mi vocabulario</h1>
+          <button class="btn ghost small" type="button" @click="signOut">Cerrar sesión</button>
+        </div>
         <p class="sub">Apunta cada día las palabras que no conoces y ponte a prueba al acabar la semana.</p>
         <nav class="tabs">
           <button type="button" :aria-current="mode === 'home' ? 'page' : null" @click="mode = 'home'">Hoy</button>
@@ -87,7 +90,7 @@ const examTitle = computed(() => {
         <HomeView v-if="mode === 'home'" v-model:editing-word="editingWord" @start-exam="startExam" />
         <WordsView v-else @edit="editFromList" @start-exam="startExam" />
 
-        <p class="foot">Sesión: {{ session.user.email }} · <button class="link" type="button" @click="signOut">Cerrar sesión</button></p>
+        <p class="foot">Sesión: {{ session.user.email }}</p>
       </template>
     </template>
   </div>

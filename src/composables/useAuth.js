@@ -37,7 +37,10 @@ async function signInWithGoogleToken(token, nonce) {
 
 async function signOut() {
   if (!supabaseReady) return
-  await supabase.auth.signOut()
+  // 'local' borra la sesión de este navegador aunque falle la llamada al servidor
+  await supabase.auth.signOut({ scope: 'local' })
+  // Que Google no vuelva a entrar solo con la misma cuenta
+  window.google?.accounts?.id?.disableAutoSelect()
 }
 
 export function useAuth() {
