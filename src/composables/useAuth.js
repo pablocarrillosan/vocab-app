@@ -26,11 +26,20 @@ async function signInWithGoogle() {
   return { ok: true }
 }
 
+// Login con el botón oficial de Google: Google nos da un token (JWT) y
+// Supabase lo valida. Así Google muestra nuestro dominio y no el de Supabase.
+async function signInWithGoogleToken(token, nonce) {
+  if (!supabaseReady) return { ok: false, message: 'Supabase no está configurado todavía.' }
+  const { error } = await supabase.auth.signInWithIdToken({ provider: 'google', token, nonce })
+  if (error) return { ok: false, message: error.message }
+  return { ok: true }
+}
+
 async function signOut() {
   if (!supabaseReady) return
   await supabase.auth.signOut()
 }
 
 export function useAuth() {
-  return { session, ready, signInWithGoogle, signOut }
+  return { session, ready, signInWithGoogle, signInWithGoogleToken, signOut }
 }

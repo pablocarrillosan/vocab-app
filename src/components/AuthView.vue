@@ -1,11 +1,65 @@
 <script setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useAuth } from '../composables/useAuth'
 import { supabaseReady } from '../lib/supabase'
 
-const { signInWithGoogle } = useAuth()
+const { signInWithGoogle, signInWithGoogleToken } = useAuth()
+const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
 const msg = ref(null)
 const sending = ref(false)
+const gisBox = ref(null)
+// Si no hay Client ID o el script de Google no carga, usamos la redirección de Supabase
+const useGis = ref(Boolean(clientId))
+
+function loadGis() {
+  if (window.google?.accounts?.id) return Promise.resolve()
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script')
+    s.src = 'https://accounts.google.com/gsi/client'
+    s.async = true
+    s.onload = resolve
+    s.onerror = reject
+    document.head.appendChild(s)
+  })
+}
+
+// Google recibe el nonce cifrado y Supabase el original, para evitar que
+// alguien reutilice un token robado
+async function makeNonce() {
+  const raw = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32))))
+  const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw))
+  const hashed = Array.from(new Uint8Array(hash), (b) => b.toString(16).padStart(2, '0')).join('')
+  return { raw, hashed }
+}
+
+onMounted(async () => {
+  if (!supabaseReady || !useGis.value) return
+  try {
+    await loadGis()
+    const nonce = await makeNonce()
+    window.google.accounts.id.initialize({
+      client_id: clientId,
+      nonce: nonce.hashed,
+      use_fedcm_for_prompt: true,
+      callback: async ({ credential }) => {
+        sending.value = true
+        const res = await signInWithGoogleToken(credential, nonce.raw)
+        if (!res.ok) msg.value = { k: 'bad', t: res.message }
+        sending.value = false
+      },
+    })
+    const dark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    window.google.accounts.id.renderButton(gisBox.value, {
+      theme: dark ? 'filled_black' : 'outline',
+      size: 'large',
+      shape: 'pill',
+      text: 'continue_with',
+      locale: 'es',
+    })
+  } catch {
+    useGis.value = false
+  }
+})
 
 async function submit() {
   if (sending.value) return
@@ -31,8 +85,10 @@ async function submit() {
     </p>
     <template v-else>
       <p v-if="msg" class="note" :class="msg.k" role="status">{{ msg.t }}</p>
+      <p v-if="useGis && sending" class="note" role="status">Entrando…</p>
       <div class="actions">
-        <button class="btn google" type="button" :disabled="sending" @click="submit">
+        <div v-if="useGis" ref="gisBox" class="gis"></div>
+        <button v-else class="btn google" type="button" :disabled="sending" @click="submit">
           <svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true">
             <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/>
             <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
@@ -47,6 +103,9 @@ async function submit() {
 </template>
 
 <style scoped>
+.gis {
+  min-height: 44px;
+}
 .btn.google {
   display: inline-flex;
   align-items: center;
