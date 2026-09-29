@@ -1,24 +1,26 @@
 <script setup>
 import { computed } from 'vue'
-import { VERBS, weekReviews, monthReviews, reached, studiedVerbs } from '../lib/verbPlan'
-import { useVerbProgress, CUMULATIVE } from '../composables/useVerbProgress'
+import { useVerbProgress } from '../composables/useVerbProgress'
+import { useVerbLevel } from '../composables/useVerbLevel'
 import { dayLong, ymd } from '../lib/dates'
 import VerbDayRow from './VerbDayRow.vue'
 
 const emit = defineEmits(['open', 'cumulative', 'missed'])
 const { results, stats } = useVerbProgress()
+const { plan } = useVerbLevel()
 
-const studied = computed(() => studiedVerbs(results.value))
+const studied = computed(() => plan.value.studiedVerbs(results.value))
 const nDays = computed(() => new Set(studied.value.map((v) => v.day)).size)
-const byKind = computed(() => ['reg', 'phr', 'irr'].map((k) => ({ k, n: studied.value.filter((v) => v.k === k).length })).filter((x) => x.n))
-const KLABEL = { reg: 'regulares', phr: 'phrasal', irr: 'irregulares' }
-const last = computed(() => results.value[CUMULATIVE])
+const byKind = computed(() => plan.value.kinds.map((k) => ({ k, n: studied.value.filter((v) => v.k === k).length })).filter((x) => x.n))
+const KLABEL = { reg: 'regulares', phr: 'phrasal', irr: 'irregulares', prep: 'con preposición' }
+const last = computed(() => results.value[plan.value.cumKey])
 const lastDate = computed(() => (last.value ? dayLong(ymd(new Date(last.value.done_at))) : ''))
 
-const missed = computed(() => VERBS.filter((v) => (stats.value[v.id]?.missed_count || 0) > 0))
+const missed = computed(() => plan.value.VERBS.filter((v) => (stats.value[v.id]?.missed_count || 0) > 0))
 
 // Se enseñan las semanas ya alcanzadas y la siguiente, bloqueada.
 const weeks = computed(() => {
+  const { weekReviews, reached } = plan.value
   const open = weekReviews.filter((p) => reached(p, results.value))
   const nextLocked = weekReviews.find((p) => !reached(p, results.value))
   return { open, nextLocked, hidden: nextLocked ? weekReviews.length - open.length - 1 : 0 }
@@ -69,8 +71,8 @@ const weeks = computed(() => {
 
   <h3 class="month">Mensuales</h3>
   <ol class="days">
-    <li v-for="p in monthReviews" :key="p.num">
-      <VerbDayRow :p="p" :label="'Mes ' + p.month" :locked="!reached(p, results)" @open="emit('open', p.num)" />
+    <li v-for="p in plan.monthReviews" :key="p.num">
+      <VerbDayRow :p="p" :label="'Mes ' + p.month" :locked="!plan.reached(p, results)" @open="emit('open', p.num)" />
     </li>
   </ol>
 </template>

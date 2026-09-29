@@ -54,7 +54,8 @@ src/
   lib/            fechas, comparación de texto y el motor de preguntas del examen
   composables/    sesión (useAuth), palabras (useWords), resultados (useExamResults)
   components/     formulario, filas de palabras, semanas, examen, pantalla de acceso
-  data/verbs.js   los 384 verbos del plan de 8 semanas
+  data/verbsB2.js los 384 verbos del plan B2 de 8 semanas
+  data/verbsC1.js los 480 verbos del plan C1 de 8 semanas (10 al día, con verbos + preposición)
   App.vue         pestañas "Hoy" / "Palabras" / "Verbos" y el examen
 supabase/
   schema.sql      tablas y políticas de seguridad por fila

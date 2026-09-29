@@ -50,8 +50,9 @@ create policy "exam_results: insert own" on public.exam_results
 create policy "exam_results: update own" on public.exam_results
   for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
--- Verbos B2: resultado de cada día del plan ------------------------------------------
+-- Verbos B2 y C1: resultado de cada día del plan -------------------------------------
 -- key es el número de día ('1'…'56') o 'acumulativo' para el repaso de todo.
+-- En el plan C1 llevan el prefijo 'c1-' ('c1-1'…'c1-56', 'c1-acumulativo').
 create table if not exists public.verb_results (
   id          uuid primary key default gen_random_uuid(),
   user_id     uuid not null default auth.uid() references auth.users(id) on delete cascade,
@@ -71,8 +72,8 @@ create policy "verb_results: insert own" on public.verb_results
 create policy "verb_results: update own" on public.verb_results
   for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
--- Verbos B2: fallos y última vez que salió cada verbo --------------------------------
--- verb es el infinitivo en inglés, que es único dentro de la lista de verbos.
+-- Verbos B2 y C1: fallos y última vez que salió cada verbo ---------------------------
+-- verb es el infinitivo en inglés, que es único entre las dos listas de verbos.
 create table if not exists public.verb_stats (
   id            uuid primary key default gen_random_uuid(),
   user_id       uuid not null default auth.uid() references auth.users(id) on delete cascade,

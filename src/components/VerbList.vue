@@ -1,29 +1,26 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { VERBS } from '../lib/verbPlan'
+import { KIND } from '../lib/verbPlan'
 import { fold } from '../lib/text'
 import { useVerbProgress } from '../composables/useVerbProgress'
+import { useVerbLevel } from '../composables/useVerbLevel'
 import ExamplePhrase from './ExamplePhrase.vue'
 
 const emit = defineEmits(['open'])
 const { stats } = useVerbProgress()
+const { plan } = useVerbLevel()
 
 const q = ref('')
 const filter = ref('all')
-const FILTERS = [
-  ['all', 'Todos'],
-  ['reg', 'Regulares'],
-  ['irr', 'Irregulares'],
-  ['phr', 'Phrasal verbs'],
-  ['missed', 'Por repasar'],
-]
+const SHORT = { prep: 'Con preposición' }
+const FILTERS = computed(() => [['all', 'Todos'], ...plan.value.kinds.map((k) => [k, SHORT[k] || KIND[k]]), ['missed', 'Por repasar']])
 const missed = (v) => (stats.value[v.id]?.missed_count || 0) > 0
 
 const list = computed(() => {
   const needle = fold(q.value.trim())
-  return VERBS.filter((v) => {
+  return plan.value.VERBS.filter((v) => {
     if (filter.value === 'missed' && !missed(v)) return false
-    if (['reg', 'irr', 'phr'].includes(filter.value) && v.k !== filter.value) return false
+    if (KIND[filter.value] && v.k !== filter.value) return false
     return !needle || fold(v.en).includes(needle) || fold(v.es).includes(needle)
   })
 })

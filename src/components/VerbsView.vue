@@ -1,8 +1,9 @@
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
-import { planOf, nextDay, studiedVerbs } from '../lib/verbPlan'
+import { LEVELS } from '../lib/verbPlan'
 import { planQuestions, cumulativeQuestions, missedQuestions, acceptedVerbAnswers } from '../lib/verbQuiz'
-import { useVerbProgress, CUMULATIVE } from '../composables/useVerbProgress'
+import { useVerbProgress } from '../composables/useVerbProgress'
+import { useVerbLevel } from '../composables/useVerbLevel'
 import VerbPlan from './VerbPlan.vue'
 import VerbReviews from './VerbReviews.vue'
 import VerbList from './VerbList.vue'
@@ -13,6 +14,7 @@ import QuizView from './QuizView.vue'
 // cabecera y las pestañas, igual que con el examen de palabras.
 const emit = defineEmits(['update:focus'])
 const { results, stats, saveResult, markLocal, flush } = useVerbProgress()
+const { level, plan } = useVerbLevel()
 
 const sub = ref('plan') // 'plan' | 'reviews' | 'list'
 const screen = ref(null) // { name: 'day', num } | { name: 'quiz', kind: 'day'|'cumulative'|'missed', num? }
@@ -42,27 +44,32 @@ async function exitQuiz() {
 const quiz = computed(() => {
   const s = screen.value
   if (!s || s.name !== 'quiz') return null
+  const pl = plan.value
   if (s.kind === 'day') {
-    const p = planOf(s.num)
-    return { title: p.t, kicker: 'Día ' + p.num + ', semana ' + p.week, build: () => planQuestions(p, stats.value) }
+    const p = pl.planOf(s.num)
+    return { title: p.t, kicker: pl.label + ' · Día ' + p.num + ', semana ' + p.week, build: () => planQuestions(p, stats.value) }
   }
   if (s.kind === 'cumulative') {
-    return { title: 'Todo lo estudiado', kicker: 'Verbos · repaso acumulativo', build: () => cumulativeQuestions(studiedVerbs(results.value), stats.value) }
+    return {
+      title: 'Todo lo estudiado',
+      kicker: 'Verbos ' + pl.label + ' · repaso acumulativo',
+      build: () => cumulativeQuestions(pl.studiedVerbs(results.value), stats.value),
+    }
   }
-  return { title: 'Los que fallo', kicker: 'Verbos · repaso de fallos', build: () => missedQuestions(stats.value) }
+  return { title: 'Los que fallo', kicker: 'Verbos ' + pl.label + ' · repaso de fallos', build: () => missedQuestions(pl.VERBS, stats.value) }
 })
 
 async function onFinish(hits, total) {
   await flush()
   const s = screen.value
-  if (s.kind === 'day') await saveResult(s.num, hits, total)
-  else if (s.kind === 'cumulative') await saveResult(CUMULATIVE, hits, total)
+  if (s.kind === 'day') await saveResult(plan.value.keyOf(s.num), hits, total)
+  else if (s.kind === 'cumulative') await saveResult(plan.value.cumKey, hits, total)
 }
 // Tras un examen del plan, botón para seguir con el siguiente día pendiente.
 const upNext = computed(() => {
   const s = screen.value
   if (!s || s.kind !== 'day') return null
-  const nx = nextDay(results.value)
+  const nx = plan.value.nextDay(results.value)
   return nx && nx.num !== s.num ? nx : null
 })
 </script>
@@ -88,13 +95,19 @@ const upNext = computed(() => {
   <VerbDay v-else-if="screen" :num="screen.num" :back-label="BACK[sub]" @back="go(null)" @start="startQuiz('day', screen.num)" />
 
   <template v-else>
-    <div class="chips subnav">
-      <button class="fchip" type="button" :aria-pressed="sub === 'plan'" @click="sub = 'plan'">Plan</button>
-      <button class="fchip" type="button" :aria-pressed="sub === 'reviews'" @click="sub = 'reviews'">Repasos</button>
-      <button class="fchip" type="button" :aria-pressed="sub === 'list'" @click="sub = 'list'">Lista</button>
+    <div class="subnav">
+      <div class="chips">
+        <button class="fchip" type="button" :aria-pressed="sub === 'plan'" @click="sub = 'plan'">Plan</button>
+        <button class="fchip" type="button" :aria-pressed="sub === 'reviews'" @click="sub = 'reviews'">Repasos</button>
+        <button class="fchip" type="button" :aria-pressed="sub === 'list'" @click="sub = 'list'">Lista</button>
+      </div>
+      <div class="level" role="group" aria-label="Nivel del plan">
+        <button v-for="(l, id) in LEVELS" :key="id" type="button" :aria-pressed="level === id" @click="level = id">{{ l.label }}</button>
+      </div>
     </div>
-    <VerbPlan v-if="sub === 'plan'" @open="openDay" />
-    <VerbReviews v-else-if="sub === 'reviews'" @open="openDay" @cumulative="startQuiz('cumulative')" @missed="startQuiz('missed')" />
-    <VerbList v-else @open="openDay" />
+    <!-- key: al cambiar de nivel se vuelven a montar con el plan nuevo -->
+    <VerbPlan v-if="sub === 'plan'" :key="level" @open="openDay" />
+    <VerbReviews v-else-if="sub === 'reviews'" :key="level" @open="openDay" @cumulative="startQuiz('cumulative')" @missed="startQuiz('missed')" />
+    <VerbList v-else :key="level" @open="openDay" />
   </template>
 </template>

@@ -1,7 +1,7 @@
 
 :root{
   --bg:#f4f5fa;--surface:#ffffff;--ink:#151a2d;--muted:#586179;--line:#dde1ee;--soft:#eceffa;
-  --reg:#2b4fd0;--irr:#b0206a;--phr:#0b7a68;--mark:#ffe680;
+  --reg:#2b4fd0;--irr:#b0206a;--phr:#0b7a68;--prep:#a84b00;--mark:#ffe680;
   --ok:#15803d;--okbg:#e3f5e9;--bad:#c62828;--badbg:#fde8e8;
   --disp:'Bricolage Grotesque',system-ui,-apple-system,'Segoe UI',sans-serif;
   --read:'Literata',Georgia,'Times New Roman',serif;
@@ -14,13 +14,13 @@
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
     --bg:#0f1220;--surface:#171b2e;--ink:#eceff8;--muted:#9aa3ba;--line:#2a3050;--soft:#1e2340;
-    --reg:#8aa5ff;--irr:#ff86bb;--phr:#4fd1b5;--mark:rgba(255,214,10,.42);
+    --reg:#8aa5ff;--irr:#ff86bb;--phr:#4fd1b5;--prep:#ffb86b;--mark:rgba(255,214,10,.42);
     --ok:#5fd68a;--okbg:#12301f;--bad:#ff7b7b;--badbg:#3a1618;
   }
 }
 :root[data-theme="dark"]{
   --bg:#0f1220;--surface:#171b2e;--ink:#eceff8;--muted:#9aa3ba;--line:#2a3050;--soft:#1e2340;
-  --reg:#8aa5ff;--irr:#ff86bb;--phr:#4fd1b5;--mark:rgba(255,214,10,.42);
+  --reg:#8aa5ff;--irr:#ff86bb;--phr:#4fd1b5;--prep:#ffb86b;--mark:rgba(255,214,10,.42);
   --ok:#5fd68a;--okbg:#12301f;--bad:#ff7b7b;--badbg:#3a1618;
 }
 *{box-sizing:border-box}
@@ -66,7 +66,7 @@ h1{font-size:clamp(30px,6vw,44px);font-weight:700}
 .row.rev{background:var(--soft)}
 .st{font-size:14px;font-weight:700;color:var(--muted);white-space:nowrap}
 .st.done{color:var(--ok)}
-.k-reg{--c:var(--reg)}.k-irr{--c:var(--irr)}.k-phr{--c:var(--phr)}.k-rev{--c:var(--ink)}
+.k-reg{--c:var(--reg)}.k-irr{--c:var(--irr)}.k-phr{--c:var(--phr)}.k-prep{--c:var(--prep)}.k-rev{--c:var(--ink)}
 .foot{margin:34px 0 0;color:var(--muted);font-size:14px}
 .link{background:none;border:0;padding:0;color:var(--muted);text-decoration:underline}
 .back{background:none;border:0;padding:6px 0;color:var(--muted);font-weight:600}
@@ -177,7 +177,10 @@ mark{background:linear-gradient(transparent 55%,var(--mark) 55%);color:inherit;p
 .emptyw{color:var(--muted);margin:0 0 14px}
 
 /* ---- sección de verbos ---- */
-.subnav{margin:14px 0 0}
+.subnav{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:0 12px;margin:14px 0 0}
+.level{display:inline-flex;gap:2px;padding:2px;margin-bottom:8px;border:2px solid var(--line);border-radius:999px}
+.level button{border:0;background:none;border-radius:999px;padding:3px 12px;font-weight:700;font-size:14px;color:var(--muted)}
+.level button[aria-pressed="true"]{background:var(--reg);color:var(--surface)}
 .row:disabled{cursor:default;color:var(--muted)}
 .row:disabled:hover{background:none}
 .row.locked .tt small{color:var(--muted)}
@@ -186,9 +189,9 @@ mark{background:linear-gradient(transparent 55%,var(--mark) 55%);color:inherit;p
 .kchips{display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 18px}
 .kchips span{padding:2px 10px;border-radius:999px;font-size:13px;font-weight:700;background:rgba(127,137,170,.22)}
 /* la tarjeta oscura invierte los colores: los tonos por tipo son los del modo contrario */
-.today .k-reg{color:#8aa5ff}.today .k-irr{color:#ff86bb}.today .k-phr{color:#4fd1b5}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .today .k-reg{color:#2b4fd0}:root:not([data-theme="light"]) .today .k-irr{color:#b0206a}:root:not([data-theme="light"]) .today .k-phr{color:#0b7a68}}
-:root[data-theme="dark"] .today .k-reg{color:#2b4fd0}:root[data-theme="dark"] .today .k-irr{color:#b0206a}:root[data-theme="dark"] .today .k-phr{color:#0b7a68}
+.today .k-reg{color:#8aa5ff}.today .k-irr{color:#ff86bb}.today .k-phr{color:#4fd1b5}.today .k-prep{color:#ffb86b}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .today .k-reg{color:#2b4fd0}:root:not([data-theme="light"]) .today .k-irr{color:#b0206a}:root:not([data-theme="light"]) .today .k-phr{color:#0b7a68}:root:not([data-theme="light"]) .today .k-prep{color:#a84b00}}
+:root[data-theme="dark"] .today .k-reg{color:#2b4fd0}:root[data-theme="dark"] .today .k-irr{color:#b0206a}:root[data-theme="dark"] .today .k-phr{color:#0b7a68}:root[data-theme="dark"] .today .k-prep{color:#a84b00}
 .lastres{margin:12px 0 0;font-size:14px;opacity:.7}
 .card{margin:14px 0 4px;padding:18px 20px;border-radius:20px;background:var(--surface);border:2px solid var(--line)}
 .cardhead{display:flex;align-items:baseline;justify-content:space-between;gap:12px}

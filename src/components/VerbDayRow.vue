@@ -15,7 +15,7 @@ const emit = defineEmits(['open'])
 const { results } = useVerbProgress()
 
 const rev = computed(() => props.p.type !== 'learn')
-const done = computed(() => results.value[props.p.num])
+const done = computed(() => results.value[props.p.key])
 const sub = computed(() => {
   if (props.locked) return (props.p.type === 'month' ? props.p.verbs.length + ' verbos, 60 preguntas. ' : '') + 'Se abre el día ' + props.p.num
   return rev.value ? reviewSub(props.p) : KIND[props.p.k]

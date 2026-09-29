@@ -4,6 +4,7 @@ import { useAuth } from './composables/useAuth'
 import { useWords } from './composables/useWords'
 import { useExamResults } from './composables/useExamResults'
 import { useVerbProgress } from './composables/useVerbProgress'
+import { useVerbLevel } from './composables/useVerbLevel'
 import { wkLabel, wkOf } from './lib/dates'
 import { buildQuestions, acceptedAnswers } from './lib/quiz'
 import AuthView from './components/AuthView.vue'
@@ -16,6 +17,11 @@ const { session, ready, signOut } = useAuth()
 const { words, load: loadWords, reset: resetWords, markLocal, flushMissed } = useWords()
 const { load: loadResults, reset: resetResults, saveResult } = useExamResults()
 const { load: loadVerbs, reset: resetVerbs } = useVerbProgress()
+const { plan: verbPlan } = useVerbLevel()
+const verbBlurb = computed(() => {
+  const p = verbPlan.value
+  return p.VERBS.length + ' verbos para el ' + p.label + ' en ' + p.WEEKS_COUNT + ' semanas, ' + p.guide.total + ' minutos al día.'
+})
 
 const mode = ref('home') // 'home' | 'list' | 'verbs'
 const verbFocus = ref(false) // un día o un examen de verbos ocupa toda la pantalla
@@ -100,7 +106,7 @@ async function finishWordExam(hits, total) {
           <p class="sub">
             {{
               mode === 'verbs'
-                ? '384 verbos para el B2 en 8 semanas, 30 minutos al día.'
+                ? verbBlurb
                 : 'Apunta cada día las palabras que no conoces y ponte a prueba al acabar la semana.'
             }}
           </p>

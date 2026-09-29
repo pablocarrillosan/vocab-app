@@ -1,20 +1,37 @@
 import { cmp, shuffle } from './text'
-import { VERBS } from './verbPlan'
+import { LEVELS } from './verbPlan'
 
 const CAP = 60
-const first = (es) => es.split(/[;,(]/)[0].trim()
+// Significados sin las aclaraciones entre paréntesis:
+// "abstenerse de (votar, beber)" -> ["abstenerse de"].
+const glosses = (es) =>
+  es
+    .replace(/\(.*?\)/g, '')
+    .split(/[;,]/)
+    .map((s) => s.trim())
+    .filter(Boolean)
 
 // Tres tipos de pregunta: significado (test), hueco en la frase y, solo en los
 // irregulares, pasado + participio. Tienen la misma forma que las del examen de
 // palabras para poder usar el mismo QuizView.
+// Las opciones falsas salen del mismo plan y tipo, pero no del mismo día (sus
+// verbos suelen ser casi sinónimos) ni de verbos que compartan un significado.
 function mcq(v) {
-  const pool = VERBS.filter((x) => x.k === v.k && x.id !== v.id && x.es !== v.es && first(x.es) !== first(v.es))
+  const mine = new Set(glosses(v.es))
+  const pool = LEVELS[v.lv].VERBS.filter((x) => x.k === v.k && x.day !== v.day && !glosses(x.es).some((g) => mine.has(g)))
   const opts = shuffle(pool)
     .slice(0, 3)
     .map((x) => x.es)
   return { type: 'mcq', dir: 'e2s', w: v, answer: v.es, options: shuffle([v.es, ...opts]) }
 }
-const cloze = (v) => ({ type: 'cloze', w: v, m: v.m, help: 'Escribe la forma correcta del verbo.', base: v.en })
+// En los verbos con preposición lo que se practica es la preposición: la pista
+// solo da el verbo y hay que escribir los dos.
+function cloze(v) {
+  if (v.k === 'prep') {
+    return { type: 'cloze', w: v, m: v.m, help: 'Escribe el verbo en la forma correcta y su preposición.', base: v.en.split(' ')[0] + ' + prep.' }
+  }
+  return { type: 'cloze', w: v, m: v.m, help: 'Escribe la forma correcta del verbo.', base: v.en }
+}
 const forms = (v) => ({ type: 'forms', w: v })
 
 function randomQ(v) {
@@ -64,8 +81,9 @@ export function cumulativeQuestions(verbs, stats) {
   return shuffle(picked.map(randomQ))
 }
 
-export function missedQuestions(stats) {
-  const weak = VERBS.filter((v) => missedOf(stats, v) > 0)
+export function missedQuestions(verbs, stats) {
+  const weak = verbs
+    .filter((v) => missedOf(stats, v) > 0)
     .sort((a, b) => missedOf(stats, b) - missedOf(stats, a))
     .slice(0, CAP)
   return shuffle(weak.map(randomQ))

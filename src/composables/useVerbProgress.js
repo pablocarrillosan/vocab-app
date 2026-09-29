@@ -1,9 +1,10 @@
 import { ref } from 'vue'
 import { supabase } from '../lib/supabase'
+import { CUMULATIVE } from '../lib/verbPlan'
 
 // Resultados de los exámenes de verbos: la clave es el número de día del plan
-// ('1'…'56') o 'acumulativo' para el repaso de todo lo estudiado.
-export const CUMULATIVE = 'acumulativo'
+// ('1'…'56') o 'acumulativo' para el repaso de todo lo estudiado. En el plan C1
+// llevan delante 'c1-' ('c1-1'…'c1-56', 'c1-acumulativo').
 
 const results = ref({}) // clave -> { score, total, done_at }
 const stats = ref({}) // verbo -> { missed_count, last_seen }
@@ -27,7 +28,7 @@ async function load() {
 async function saveResult(key, score, total) {
   key = String(key)
   const prev = results.value[key]
-  if (key !== CUMULATIVE && prev && score / total < prev.score / prev.total) return prev
+  if (!key.endsWith(CUMULATIVE) && prev && score / total < prev.score / prev.total) return prev
   const { data, error } = await supabase
     .from('verb_results')
     .upsert({ key, score, total, done_at: new Date().toISOString() }, { onConflict: 'user_id,key' })

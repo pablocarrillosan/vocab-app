@@ -1,8 +1,9 @@
 <script setup>
 import { computed, ref, reactive } from 'vue'
-import { KIND, planOf } from '../lib/verbPlan'
+import { KIND } from '../lib/verbPlan'
 import { questionCount } from '../lib/verbQuiz'
 import { useVerbProgress } from '../composables/useVerbProgress'
+import { useVerbLevel } from '../composables/useVerbLevel'
 import SayButton from './SayButton.vue'
 import ExamplePhrase from './ExamplePhrase.vue'
 
@@ -12,8 +13,9 @@ const props = defineProps({
 })
 const emit = defineEmits(['back', 'start'])
 const { stats } = useVerbProgress()
+const { plan } = useVerbLevel()
 
-const p = computed(() => planOf(props.num))
+const p = computed(() => plan.value.planOf(props.num))
 const isLearn = computed(() => p.value.type === 'learn')
 const n = computed(() => questionCount(p.value, stats.value))
 const missed = (v) => (stats.value[v.id]?.missed_count || 0) > 0
@@ -26,7 +28,7 @@ const groups = computed(() => {
     if (!g.has(v.day)) g.set(v.day, [])
     g.get(v.day).push(v)
   })
-  return [...g.entries()].map(([day, verbs]) => ({ day, t: planOf(day).t, verbs }))
+  return [...g.entries()].map(([day, verbs]) => ({ day, t: plan.value.planOf(day).t, verbs }))
 })
 
 const hideEs = ref(false)
@@ -40,15 +42,18 @@ function reveal(id) {
 <template>
   <button class="back" type="button" @click="emit('back')">← {{ backLabel }}</button>
   <div class="dayhead">
-    <div class="dsub">Día {{ p.num }}, semana {{ p.week }}</div>
+    <div class="dsub">{{ plan.label }} · Día {{ p.num }}, semana {{ p.week }}</div>
     <h2>{{ p.t }}</h2>
     <span v-if="isLearn" class="chip" :class="'k-' + p.k">{{ KIND[p.k] }}</span>
   </div>
 
   <template v-if="isLearn">
     <p class="plan">
-      Guía de 30 minutos: unos 15 leyendo cada verbo y diciendo la frase en voz alta, unos 10 con el examen ({{ n }} preguntas) y 5 para volver a los
-      que falles.
+      Guía de {{ plan.guide.total }} minutos: unos {{ plan.guide.read }} leyendo cada verbo y diciendo la frase en voz alta, unos
+      {{ plan.guide.quiz }} con el examen ({{ n }} preguntas) y {{ plan.guide.fix }} para volver a los que falles.
+    </p>
+    <p v-if="p.k === 'prep'" class="plan">
+      Fíjate bien en la preposición: en las preguntas de huecos solo verás el verbo y tendrás que escribirla tú.
     </p>
     <label class="toggle"><input v-model="hideEs" type="checkbox" /> Ocultar traducciones (toca una para verla)</label>
     <div class="entries" :class="{ 'hide-es': hideEs }">

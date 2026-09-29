@@ -1,25 +1,30 @@
 <script setup>
 import { computed, reactive } from 'vue'
-import { PLAN, WEEKS_COUNT, MONTH_WEEKS, TOTAL_DAYS, VERBS, nextDay } from '../lib/verbPlan'
+import { MONTH_WEEKS } from '../lib/verbPlan'
 import { useVerbProgress } from '../composables/useVerbProgress'
+import { useVerbLevel } from '../composables/useVerbLevel'
 import VerbDayRow from './VerbDayRow.vue'
 
 const emit = defineEmits(['open'])
 const { results, stats } = useVerbProgress()
+const { plan } = useVerbLevel()
 
-const cur = computed(() => nextDay(results.value))
+const cur = computed(() => plan.value.nextDay(results.value))
 const openWeeks = reactive(new Set(cur.value ? [cur.value.week] : []))
 
-const nDone = computed(() => PLAN.filter((p) => results.value[p.num]).length)
-const seenVerbs = computed(() => PLAN.filter((p) => p.type === 'learn' && results.value[p.num]).reduce((n, p) => n + p.verbs.length, 0))
-const nMiss = computed(() => Object.values(stats.value).filter((s) => s.missed_count > 0).length)
+const nDone = computed(() => plan.value.PLAN.filter((p) => results.value[p.key]).length)
+const seenVerbs = computed(() =>
+  plan.value.PLAN.filter((p) => p.type === 'learn' && results.value[p.key]).reduce((n, p) => n + p.verbs.length, 0),
+)
+const nMiss = computed(() => plan.value.VERBS.filter((v) => (stats.value[v.id]?.missed_count || 0) > 0).length)
 
 const months = computed(() => {
+  const { PLAN, WEEKS_COUNT } = plan.value
   const out = []
   for (let w = 1; w <= WEEKS_COUNT; w++) {
     if ((w - 1) % MONTH_WEEKS === 0) out.push({ n: (w - 1) / MONTH_WEEKS + 1, weeks: [] })
     const days = PLAN.filter((p) => p.week === w)
-    const done = days.filter((p) => results.value[p.num]).length
+    const done = days.filter((p) => results.value[p.key]).length
     out[out.length - 1].weeks.push({ w, days, done, pct: Math.round((100 * done) / days.length) })
   }
   return out
@@ -47,13 +52,13 @@ function toggle(w, open) {
     </template>
     <template v-else>
       <h2>Plan completado</h2>
-      <p class="pv">Has pasado por los {{ VERBS.length }} verbos. Sigue con el repaso acumulativo y con los que todavía fallas.</p>
+      <p class="pv">Has pasado por los {{ plan.VERBS.length }} verbos. Sigue con el repaso acumulativo y con los que todavía fallas.</p>
     </template>
   </section>
 
   <div class="stats">
-    <div><b>{{ nDone }} de {{ TOTAL_DAYS }}</b><span>días hechos</span></div>
-    <div><b>{{ seenVerbs }} de {{ VERBS.length }}</b><span>verbos estudiados</span></div>
+    <div><b>{{ nDone }} de {{ plan.TOTAL_DAYS }}</b><span>días hechos</span></div>
+    <div><b>{{ seenVerbs }} de {{ plan.VERBS.length }}</b><span>verbos estudiados</span></div>
     <div><b>{{ nMiss }}</b><span>por repasar</span></div>
   </div>
 
