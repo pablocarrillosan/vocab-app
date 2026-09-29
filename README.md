@@ -8,7 +8,7 @@ palabras.
 ## 1. Crear el proyecto de Supabase
 
 1. Entra en [supabase.com](https://supabase.com) y crea un proyecto nuevo (la capa gratuita sobra para esto).
-2. Ve a **SQL Editor** y pega el contenido de [`supabase/schema.sql`](supabase/schema.sql). Ejecútalo: crea las tablas `words` y `exam_results` con seguridad por fila (cada usuario solo ve las suyas).
+2. Ve a **SQL Editor** y pega el contenido de [`supabase/schema.sql`](supabase/schema.sql). Ejecútalo: crea las tablas `words`, `exam_results`, `verb_results` y `verb_stats` con seguridad por fila (cada usuario solo ve las suyas).
 3. Ve a **Project Settings → API** y copia la **Project URL** y la clave **anon public**.
 4. Ve a **Authentication → Sign In / Providers → Email** y confirma que el inicio de sesión por email (enlace mágico) está activado — lo está por defecto.
 5. En **Authentication → URL Configuration**, añade `http://localhost:5173` a las *Redirect URLs* para poder probar en local (cuando despliegues, añade también la URL final).
@@ -54,7 +54,8 @@ src/
   lib/            fechas, comparación de texto y el motor de preguntas del examen
   composables/    sesión (useAuth), palabras (useWords), resultados (useExamResults)
   components/     formulario, filas de palabras, semanas, examen, pantalla de acceso
-  App.vue         pestañas "Hoy" / "Palabras" y el examen
+  data/verbs.js   los 384 verbos del plan de 8 semanas
+  App.vue         pestañas "Hoy" / "Palabras" / "Verbos" y el examen
 supabase/
   schema.sql      tablas y políticas de seguridad por fila
 ```

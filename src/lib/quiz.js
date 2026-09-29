@@ -10,7 +10,9 @@ export const altsOf = (en) =>
 
 // Busca en la frase de ejemplo dónde aparece la palabra (o alguna de sus
 // variantes), para poder convertirla en un hueco que rellenar.
+// Los verbos del plan ya traen la posición precalculada en w.m.
 export function matchIn(w) {
+  if (w.m) return w.m
   const ex = w.ex || ''
   if (!ex) return null
   const alts = altsOf(w.en)

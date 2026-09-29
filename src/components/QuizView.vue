@@ -1,45 +1,43 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { buildQuestions, acceptedAnswers } from '../lib/quiz'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { cmp } from '../lib/text'
-import { useWords } from '../composables/useWords'
-import { useExamResults } from '../composables/useExamResults'
+import { formsOk } from '../lib/verbQuiz'
 import SayButton from './SayButton.vue'
 import ExamplePhrase from './ExamplePhrase.vue'
 
+// Pantalla de examen compartida por palabras y verbos. Quien la usa pasa cómo
+// construir las preguntas y qué respuestas acepta, y recibe cada acierto/fallo
+// (answer) y el resultado final (finish).
 const props = defineProps({
-  scopeWords: { type: Array, required: true },
-  pool: { type: Array, required: true },
   title: { type: String, required: true },
-  weekKey: { type: String, default: null },
+  kicker: { type: String, default: 'Examen' },
+  build: { type: Function, required: true },
+  accepted: { type: Function, required: true },
 })
-const emit = defineEmits(['exit'])
-const { markLocal, flushMissed } = useWords()
-const { saveResult } = useExamResults()
+const emit = defineEmits(['exit', 'answer', 'finish'])
 
-function build() {
-  return buildQuestions(props.scopeWords, props.pool)
-}
-
-const questions = ref(build())
-const total = questions.value.length
+const questions = ref(props.build())
+const total = computed(() => questions.value.length)
 const i = ref(0)
 const checked = ref(false)
 const lastOk = ref(false)
 const sel = ref(null)
 const val = ref('')
+const val2 = ref('')
+const in2 = ref(null)
 const results = ref([])
 const finished = ref(false)
 
 const current = computed(() => questions.value[i.value])
 const hits = computed(() => results.value.filter((r) => r.ok).length)
-const progressPct = computed(() => Math.round((100 * i.value) / total))
+const progressPct = computed(() => Math.round((100 * i.value) / total.value))
+const kCls = (w) => (w.k ? 'k-' + w.k : null)
 
 function record(ok) {
   checked.value = true
   lastOk.value = ok
   results.value.push({ q: current.value, ok })
-  markLocal(current.value.w.id, ok)
+  emit('answer', current.value, ok)
 }
 function pick(idx) {
   if (checked.value || current.value.type !== 'mcq') return
@@ -48,39 +46,44 @@ function pick(idx) {
 }
 function check() {
   if (checked.value || current.value.type === 'mcq' || !val.value.trim()) return
-  const ok = acceptedAnswers(current.value, props.pool).some((a) => cmp(a) === cmp(val.value))
-  record(ok)
+  if (current.value.type === 'forms') {
+    if (!val2.value.trim()) return in2.value?.focus()
+    return record(formsOk(current.value.w, val.value, val2.value))
+  }
+  record(props.accepted(current.value).some((a) => cmp(a) === cmp(val.value)))
 }
-async function next() {
+function next() {
   if (!checked.value) return
   i.value++
   checked.value = false
   val.value = ''
+  val2.value = ''
   sel.value = null
-  if (i.value >= total) await finish()
+  if (i.value >= total.value) finish()
 }
-async function finish() {
+function finish() {
   finished.value = true
-  await flushMissed()
-  if (props.weekKey) await saveResult(props.weekKey, hits.value, total)
+  emit('finish', hits.value, total.value)
 }
 function again() {
-  questions.value = build()
+  questions.value = props.build()
   i.value = 0
   checked.value = false
   val.value = ''
+  val2.value = ''
   sel.value = null
   results.value = []
   finished.value = false
+  nextTick(() => window.scrollTo(0, 0))
 }
 
 const resultMsg = computed(() => {
-  const pc = Math.round((100 * hits.value) / total)
+  const pc = Math.round((100 * hits.value) / total.value)
   return pc >= 90
-    ? 'Muy bien. Estas palabras ya casi son tuyas.'
+    ? 'Muy bien. Esto ya casi es tuyo.'
     : pc >= 70
       ? 'Bien. Mira los fallos de abajo antes de seguir.'
-      : 'Merece otra vuelta: vuelve a leer las palabras y repite el examen.'
+      : 'Merece otra vuelta: vuelve a leerlo y repite el examen.'
 })
 const wrongList = computed(() => {
   const seen = new Set()
@@ -113,11 +116,13 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 <template>
   <button class="back" type="button" @click="emit('exit')">← Salir del examen</button>
   <div class="dayhead">
-    <div class="dsub">Examen</div>
+    <div class="dsub">{{ kicker }}</div>
     <h2>{{ title }}</h2>
   </div>
 
-  <div v-if="!finished" class="qwrap">
+  <p v-if="!total" class="plan">No hay nada que preguntar todavía.</p>
+
+  <div v-else-if="!finished" class="qwrap">
     <div class="qbar"><i :style="{ width: progressPct + '%' }"></i></div>
     <div class="qmeta">
       <span>Pregunta {{ i + 1 }} de {{ total }}</span>
@@ -126,7 +131,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 
     <template v-if="current.type === 'mcq'">
       <h3 v-if="current.dir === 'e2s'" class="qprompt">
-        ¿Qué significa <span class="qw" lang="en">{{ current.w.en }}</span>? <SayButton :text="current.w.en" />
+        ¿Qué significa <span class="qw" :class="kCls(current.w)" lang="en">{{ current.w.en }}</span>? <SayButton :text="current.w.en" />
       </h3>
       <h3 v-else class="qprompt">¿Cómo se dice <span class="qw">{{ current.w.es }}</span> en inglés?</h3>
       <div class="opts">
@@ -145,7 +150,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
     </template>
 
     <template v-else-if="current.type === 'cloze'">
-      <p class="qhelp">Escribe la palabra que falta.</p>
+      <p class="qhelp">{{ current.help || 'Escribe la palabra que falta.' }}</p>
       <p class="sentence" lang="en">
         {{ current.w.ex.slice(0, current.m.i) }}<input
           v-model="val"
@@ -157,9 +162,41 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
           autocapitalize="none"
           spellcheck="false"
           aria-label="Respuesta"
-        />{{ current.w.ex.slice(current.m.i + current.m.t.length) }}
+        /><template v-if="current.base"> <span class="base">({{ current.base }})</span></template>{{ current.w.ex.slice(current.m.i + current.m.t.length) }}
       </p>
       <p class="hint">Pista: {{ current.w.es }}</p>
+    </template>
+
+    <template v-else-if="current.type === 'forms'">
+      <h3 class="qprompt">
+        Escribe el pasado y el participio de <span class="qw" :class="kCls(current.w)" lang="en">{{ current.w.en }}</span>
+      </h3>
+      <p class="hint" style="margin: -8px 0 14px">{{ current.w.es }}</p>
+      <div class="pair">
+        <label
+          >Pasado<input
+            v-model="val"
+            class="blank"
+            :class="{ ok: checked && lastOk, bad: checked && !lastOk }"
+            :disabled="checked"
+            lang="en"
+            autocomplete="off"
+            autocapitalize="none"
+            spellcheck="false"
+        /></label>
+        <label
+          >Participio<input
+            ref="in2"
+            v-model="val2"
+            class="blank"
+            :class="{ ok: checked && lastOk, bad: checked && !lastOk }"
+            :disabled="checked"
+            lang="en"
+            autocomplete="off"
+            autocapitalize="none"
+            spellcheck="false"
+        /></label>
+      </div>
     </template>
 
     <template v-else>
@@ -182,8 +219,11 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
       <template v-else-if="current.type === 'mcq'">
         <b class="t">No es esa</b><span><b lang="en">{{ current.w.en }}</b> significa {{ current.w.es }}.</span>
       </template>
+      <template v-else-if="current.type === 'forms'">
+        <b class="t">Respuesta: pasado {{ current.w.past.join('/') }}, participio {{ current.w.pp.join('/') }}</b>
+      </template>
       <template v-else>
-        <b class="t">Respuesta: {{ current.type === 'cloze' ? current.m.t : current.w.en }}</b>
+        <b class="t">Respuesta: {{ current.type === 'cloze' ? (current.w.alts || [current.m.t]).join(' o ') : current.w.en }}</b>
       </template>
       <ExamplePhrase :word="current.w" small />
     </div>
@@ -199,15 +239,20 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
     <p class="plan" style="margin-top: 0">{{ resultMsg }}</p>
     <template v-if="wrongList.length">
       <h3 style="margin: 22px 0 4px; font-size: 22px">Para repasar</h3>
-      <div v-for="w in wrongList" :key="w.id" class="miss">
+      <div v-for="w in wrongList" :key="w.id" class="miss" :class="kCls(w)">
         <h3 lang="en">{{ w.en }} <SayButton :text="w.en" small /></h3>
+        <div v-if="w.past" class="forms">
+          pasado <b lang="en">{{ w.past.join('/') }}</b>, participio <b lang="en">{{ w.pp.join('/') }}</b>
+        </div>
         <div class="es">{{ w.es }}</div>
         <ExamplePhrase :word="w" />
       </div>
     </template>
     <div class="actions">
       <button class="btn ghost" type="button" @click="again">Repetir el examen</button>
-      <button class="btn" type="button" @click="emit('exit')">Volver</button>
+      <slot name="result-actions">
+        <button class="btn" type="button" @click="emit('exit')">Volver</button>
+      </slot>
     </div>
   </div>
 </template>

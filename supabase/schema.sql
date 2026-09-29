@@ -49,3 +49,44 @@ create policy "exam_results: insert own" on public.exam_results
   for insert with check (auth.uid() = user_id);
 create policy "exam_results: update own" on public.exam_results
   for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Verbos B2: resultado de cada día del plan ------------------------------------------
+-- key es el número de día ('1'…'56') o 'acumulativo' para el repaso de todo.
+create table if not exists public.verb_results (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  key         text not null,
+  score       integer not null,
+  total       integer not null,
+  done_at     timestamptz not null default now(),
+  unique (user_id, key)
+);
+
+alter table public.verb_results enable row level security;
+
+create policy "verb_results: select own" on public.verb_results
+  for select using (auth.uid() = user_id);
+create policy "verb_results: insert own" on public.verb_results
+  for insert with check (auth.uid() = user_id);
+create policy "verb_results: update own" on public.verb_results
+  for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Verbos B2: fallos y última vez que salió cada verbo --------------------------------
+-- verb es el infinitivo en inglés, que es único dentro de la lista de verbos.
+create table if not exists public.verb_stats (
+  id            uuid primary key default gen_random_uuid(),
+  user_id       uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  verb          text not null,
+  missed_count  integer not null default 0,
+  last_seen     timestamptz,
+  unique (user_id, verb)
+);
+
+alter table public.verb_stats enable row level security;
+
+create policy "verb_stats: select own" on public.verb_stats
+  for select using (auth.uid() = user_id);
+create policy "verb_stats: insert own" on public.verb_stats
+  for insert with check (auth.uid() = user_id);
+create policy "verb_stats: update own" on public.verb_stats
+  for update using (auth.uid() = user_id) with check (auth.uid() = user_id);

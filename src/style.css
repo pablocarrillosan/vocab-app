@@ -142,8 +142,8 @@ mark{background:linear-gradient(transparent 55%,var(--mark) 55%);color:inherit;p
 @media (max-width:480px){.cl b{min-width:110px}}
 
 /* ---- añadido para la app de vocabulario ---- */
-.qw{color:var(--reg)}
-.miss h3{color:var(--reg)}
+.qw{color:var(--c,var(--reg))}
+.miss h3{color:var(--c,var(--reg))}
 .addcard{margin:22px 0 4px;padding:20px 18px 18px;border:1px solid var(--line);background:var(--surface);border-radius:20px}
 .addcard h2{font-size:22px}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
@@ -175,3 +175,25 @@ mark{background:linear-gradient(transparent 55%,var(--mark) 55%);color:inherit;p
 .badge.todo{color:var(--reg)}
 .wkact{padding:2px 0 6px}
 .emptyw{color:var(--muted);margin:0 0 14px}
+
+/* ---- sección de verbos ---- */
+.subnav{margin:14px 0 0}
+.row:disabled{cursor:default;color:var(--muted)}
+.row:disabled:hover{background:none}
+.row.locked .tt small{color:var(--muted)}
+.days li+li{margin-top:2px}
+.eyebrow{display:block;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.7;margin-bottom:6px}
+.kchips{display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 18px}
+.kchips span{padding:2px 10px;border-radius:999px;font-size:13px;font-weight:700;background:rgba(127,137,170,.22)}
+/* la tarjeta oscura invierte los colores: los tonos por tipo son los del modo contrario */
+.today .k-reg{color:#8aa5ff}.today .k-irr{color:#ff86bb}.today .k-phr{color:#4fd1b5}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .today .k-reg{color:#2b4fd0}:root:not([data-theme="light"]) .today .k-irr{color:#b0206a}:root:not([data-theme="light"]) .today .k-phr{color:#0b7a68}}
+:root[data-theme="dark"] .today .k-reg{color:#2b4fd0}:root[data-theme="dark"] .today .k-irr{color:#b0206a}:root[data-theme="dark"] .today .k-phr{color:#0b7a68}
+.lastres{margin:12px 0 0;font-size:14px;opacity:.7}
+.card{margin:14px 0 4px;padding:18px 20px;border-radius:20px;background:var(--surface);border:2px solid var(--line)}
+.cardhead{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.cardhead h3{font-size:20px}
+.cardhead span{color:var(--muted);font-size:14px}
+.vchips{display:flex;flex-wrap:wrap;gap:4px 14px;margin:10px 0 16px;font-weight:600}
+.vchips span{color:var(--c)}
+.vchips .more{color:var(--muted);font-weight:400}
