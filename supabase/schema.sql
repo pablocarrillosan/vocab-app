@@ -91,3 +91,26 @@ create policy "verb_stats: insert own" on public.verb_stats
   for insert with check (auth.uid() = user_id);
 create policy "verb_stats: update own" on public.verb_stats
   for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Repaso de gramática B1: respuestas y notas de cada bloque ---------------------------
+-- block es el id del bloque ('presentes', 'pasados'…). answers guarda lo escrito o
+-- elegido en cada ejercicio ('tanda.ítem' o 'tanda.ítem.hueco' -> texto) y scores la
+-- nota de cada tanda corregida (índice de tanda -> [aciertos, total]).
+create table if not exists public.grammar_progress (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  block       text not null,
+  answers     jsonb not null default '{}'::jsonb,
+  scores      jsonb not null default '{}'::jsonb,
+  updated_at  timestamptz not null default now(),
+  unique (user_id, block)
+);
+
+alter table public.grammar_progress enable row level security;
+
+create policy "grammar_progress: select own" on public.grammar_progress
+  for select using (auth.uid() = user_id);
+create policy "grammar_progress: insert own" on public.grammar_progress
+  for insert with check (auth.uid() = user_id);
+create policy "grammar_progress: update own" on public.grammar_progress
+  for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
