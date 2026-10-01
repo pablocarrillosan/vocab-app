@@ -88,7 +88,7 @@ function focusForm() {
     </template>
   </section>
 
-  <WordForm id="form" ref="formRef" :editing-word="editingWord" @saved="onSaved" @cancel="emit('update:editingWord', null)" />
+  <WordForm id="form" ref="formRef" :editing-word="editingWord" @saved="onSaved" @cancel="emit('update:editingWord', null)" @edit="editWord" />
 
   <div class="stats">
     <div><b>{{ words.length }}</b><span>palabras apuntadas</span></div>

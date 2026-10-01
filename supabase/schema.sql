@@ -12,10 +12,17 @@ create table if not exists public.words (
   en            text not null,
   es            text not null,
   ex            text not null default '',
+  pos           text,                     -- categoría: n, v, adj, adv, phr, expr
+  note          text not null default '', -- matiz que distingue el significado
   word_date     date not null,
   missed_count  integer not null default 0,
   created_at    timestamptz not null default now()
 );
+
+-- Si la tabla ya existía de antes, esto añade las columnas de categoría y matiz.
+-- Una palabra puede tener varias filas con el mismo inglés: una por significado.
+alter table public.words add column if not exists pos text;
+alter table public.words add column if not exists note text not null default '';
 
 create index if not exists words_user_date_idx on public.words (user_id, word_date);
 

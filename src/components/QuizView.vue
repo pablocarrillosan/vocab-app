@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { cmp } from '../lib/text'
 import { formsOk } from '../lib/verbQuiz'
+import { meaning } from '../lib/words'
 import SayButton from './SayButton.vue'
 import ExamplePhrase from './ExamplePhrase.vue'
 
@@ -133,7 +134,9 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
       <h3 v-if="current.dir === 'e2s'" class="qprompt">
         ¿Qué significa <span class="qw" :class="kCls(current.w)" lang="en">{{ current.w.en }}</span>? <SayButton :text="current.w.en" />
       </h3>
-      <h3 v-else class="qprompt">¿Cómo se dice <span class="qw">{{ current.w.es }}</span> en inglés?</h3>
+      <h3 v-else class="qprompt">
+        ¿Cómo se dice <span class="qw">{{ current.w.es }}</span><span v-if="current.w.note" class="qnote"> ({{ current.w.note }})</span> en inglés?
+      </h3>
       <div class="opts">
         <button
           v-for="(o, idx) in current.options"
@@ -164,7 +167,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
           aria-label="Respuesta"
         /><template v-if="current.base"> <span class="base">({{ current.base }})</span></template>{{ current.w.ex.slice(current.m.i + current.m.t.length) }}
       </p>
-      <p class="hint">Pista: {{ current.w.es }}</p>
+      <p class="hint">Pista: {{ meaning(current.w) }}</p>
     </template>
 
     <template v-else-if="current.type === 'forms'">
@@ -200,7 +203,9 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
     </template>
 
     <template v-else>
-      <h3 class="qprompt">Escribe en inglés: <span class="qw">{{ current.w.es }}</span></h3>
+      <h3 class="qprompt">
+        Escribe en inglés: <span class="qw">{{ current.w.es }}</span><span v-if="current.w.note" class="qnote"> ({{ current.w.note }})</span>
+      </h3>
       <input
         v-model="val"
         class="blank"
@@ -217,7 +222,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
     <div v-if="checked" class="fb" :class="lastOk ? 'ok' : 'bad'">
       <template v-if="lastOk"><b class="t">Correcto</b></template>
       <template v-else-if="current.type === 'mcq'">
-        <b class="t">No es esa</b><span><b lang="en">{{ current.w.en }}</b> significa {{ current.w.es }}.</span>
+        <b class="t">No es esa</b><span><b lang="en">{{ current.w.en }}</b> significa {{ meaning(current.w) }}.</span>
       </template>
       <template v-else-if="current.type === 'forms'">
         <b class="t">Respuesta: pasado {{ current.w.past.join('/') }}, participio {{ current.w.pp.join('/') }}</b>
@@ -244,7 +249,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
         <div v-if="w.past" class="forms">
           pasado <b lang="en">{{ w.past.join('/') }}</b>, participio <b lang="en">{{ w.pp.join('/') }}</b>
         </div>
-        <div class="es">{{ w.es }}</div>
+        <div class="es">{{ meaning(w) }}</div>
         <ExamplePhrase :word="w" />
       </div>
     </template>

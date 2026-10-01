@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { wkLabel, dayLabel, today } from '../lib/dates'
+import { groupWords } from '../lib/words'
 import WordRow from './WordRow.vue'
 
 const props = defineProps({
@@ -18,7 +19,7 @@ const byDay = computed(() => {
   return Object.keys(g)
     .sort()
     .reverse()
-    .map((d) => ({ day: d, words: g[d] }))
+    .map((d) => ({ day: d, groups: groupWords(g[d]) }))
 })
 const td = today()
 </script>
@@ -41,7 +42,7 @@ const td = today()
       </div>
       <template v-for="g in byDay" :key="g.day">
         <div class="dayh">{{ dayLabel(g.day) }}<template v-if="g.day === td"> · hoy</template></div>
-        <WordRow v-for="w in g.words" :key="w.id" :word="w" @edit="emit('edit', $event)" />
+        <WordRow v-for="x in g.groups" :key="x.key" :senses="x.senses" @edit="emit('edit', $event)" />
       </template>
     </template>
   </details>

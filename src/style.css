@@ -158,7 +158,7 @@ mark{background:linear-gradient(transparent 55%,var(--mark) 55%);color:inherit;p
 .note{margin:12px 0 0;font-weight:600;font-size:15px}
 .note.ok{color:var(--ok)}
 .note.bad{color:var(--bad)}
-.wrow{padding:12px 6px 12px 16px;box-shadow:inset 4px 0 0 var(--reg);border-bottom:1px solid var(--line);display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center}
+.wrow{padding:12px 6px 12px 16px;box-shadow:inset 4px 0 0 var(--reg);border-bottom:1px solid var(--line);display:grid;gap:2px}
 .wl{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
 .wl .w{font-family:var(--disp);font-weight:700;font-size:22px;color:var(--reg);overflow-wrap:anywhere}
 .wl .tag{margin-left:2px}
@@ -298,3 +298,27 @@ mark{background:linear-gradient(transparent 55%,var(--mark) 55%);color:inherit;p
 .gscore{font-size:14px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
 .gscore.good{color:var(--ok)}
 .gfoot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin:10px 0 0;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+
+/* ---- varios significados por palabra ---- */
+.cnt{font-size:13px;font-weight:700;color:var(--muted);margin-left:4px}
+.sense{display:grid;grid-template-columns:1fr auto;gap:0 10px;align-items:start}
+.sense.multi{grid-template-columns:auto 1fr auto;padding:4px 0}
+.sense .i{font-family:var(--disp);font-weight:700;color:var(--muted);min-width:14px;padding-top:1px}
+.sense .sb{min-width:0}
+.sense .m{font-weight:600}
+.sense .ex{margin:2px 0 0;font-size:15.5px;color:var(--muted)}
+.pos{font-family:var(--read);font-style:italic;font-weight:600;font-size:.9em;color:var(--phr);margin-right:6px}
+.nt{color:var(--muted);font-weight:400}
+.qnote{color:var(--muted);font-weight:400;font-size:.8em}
+select.inp{appearance:auto}
+.sibs{margin-top:14px;padding:12px 14px;border-radius:14px;background:var(--soft);font-size:15px}
+.sibs p{margin:0}
+.sibs ul{list-style:none;margin:6px 0 0;padding:0}
+.sibs li{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.dictbox{margin-top:10px}
+.dictbox .mini{padding-left:0}
+.dictbox .hint{font-size:15px}
+.dlist{display:grid;gap:6px;margin:8px 0 4px}
+.dsense{display:grid;gap:2px;text-align:left;padding:10px 12px;border-radius:12px;border:2px solid var(--line);background:var(--bg);font-size:15px}
+.dsense:hover{border-color:var(--reg)}
+.dex{font-family:var(--read);font-style:italic;color:var(--muted);font-size:14.5px}

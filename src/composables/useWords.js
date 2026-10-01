@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { supabase } from '../lib/supabase'
-import { cmp } from '../lib/text'
+import { fold } from '../lib/text'
+import { headKey } from '../lib/words'
 
 const words = ref([])
 const loading = ref(true)
@@ -19,22 +20,34 @@ async function load() {
   return error
 }
 
-function findDuplicate(en, excludeId) {
-  return words.value.find((w) => w.id !== excludeId && cmp(w.en) === cmp(en))
+// Los otros significados apuntados de la misma palabra en inglés.
+function sensesOf(en, excludeId) {
+  const k = headKey(en)
+  return words.value.filter((w) => w.id !== excludeId && headKey(w.en) === k)
 }
 
-async function addWord({ en, es, ex, word_date }) {
-  const dupe = findDuplicate(en)
-  if (dupe) return { ok: false, message: 'Ya tienes «' + dupe.en + '» apuntada el ' + dupe.word_date + '.' }
-  const { data, error } = await supabase.from('words').insert({ en, es, ex: ex || '', word_date }).select().single()
+// Solo es duplicada si coinciden la palabra y el significado: «bank = banco» y
+// «bank = orilla» son dos significados distintos que se guardan por separado.
+function findDuplicate(en, es, excludeId) {
+  return sensesOf(en, excludeId).find((w) => fold(w.es.trim()) === fold(es.trim()))
+}
+
+async function addWord({ en, es, ex, pos, note, word_date }) {
+  const dupe = findDuplicate(en, es)
+  if (dupe) return { ok: false, message: 'Ya tienes «' + dupe.en + '» = ' + dupe.es + ' apuntada el ' + dupe.word_date + '.' }
+  const { data, error } = await supabase
+    .from('words')
+    .insert({ en, es, ex: ex || '', pos: pos || null, note: note || '', word_date })
+    .select()
+    .single()
   if (error) return { ok: false, message: error.message }
   words.value.unshift(data)
   return { ok: true, word: data }
 }
 
 async function updateWord(id, patch) {
-  const dupe = patch.en ? findDuplicate(patch.en, id) : null
-  if (dupe) return { ok: false, message: 'Ya tienes «' + dupe.en + '» apuntada.' }
+  const dupe = patch.en && patch.es ? findDuplicate(patch.en, patch.es, id) : null
+  if (dupe) return { ok: false, message: 'Ya tienes «' + dupe.en + '» = ' + dupe.es + ' apuntada.' }
   const { data, error } = await supabase.from('words').update(patch).eq('id', id).select().single()
   if (error) return { ok: false, message: error.message }
   const i = words.value.findIndex((w) => w.id === id)
@@ -72,5 +85,5 @@ function reset() {
 }
 
 export function useWords() {
-  return { words, loading, loaded, load, addWord, updateWord, removeWord, markLocal, flushMissed, reset }
+  return { words, loading, loaded, load, sensesOf, addWord, updateWord, removeWord, markLocal, flushMissed, reset }
 }

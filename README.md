@@ -67,3 +67,15 @@ El examen mezcla tres tipos de pregunta: elegir el significado, escribir la
 palabra a partir del significado, y rellenar el hueco de la frase de ejemplo
 (cuando la palabra tiene una). Las que fallas se repiten con más frecuencia en
 el siguiente examen.
+
+Una palabra puede tener varios significados: si apuntas «bank = orilla» cuando
+ya tenías «bank = banco», se guarda como un significado más y la lista los
+muestra juntos, cada uno con su frase, su categoría (n., v., adj.…), su matiz
+opcional («de un río») y su propio contador de fallos. Al apuntar puedes
+consultar las acepciones en [dictionaryapi.dev](https://dictionaryapi.dev) para
+rellenar la categoría y la frase de ejemplo.
+
+Si ya tenías la base de datos creada antes de esto, vuelve a ejecutar
+[`supabase/schema.sql`](supabase/schema.sql) (o solo sus dos líneas
+`alter table public.words add column if not exists …`) para añadir las columnas
+`pos` y `note`.
