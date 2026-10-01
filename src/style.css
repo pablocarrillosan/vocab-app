@@ -322,3 +322,5 @@ select.inp{appearance:auto}
 .dsense{display:grid;gap:2px;text-align:left;padding:10px 12px;border-radius:12px;border:2px solid var(--line);background:var(--bg);font-size:15px}
 .dsense:hover{border-color:var(--reg)}
 .dex{font-family:var(--read);font-style:italic;color:var(--muted);font-size:14.5px}
+.dsrc{margin:0;color:var(--muted);font-size:13px}
+.dsrc .mini{font-size:13px}
