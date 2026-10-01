@@ -1,4 +1,5 @@
 import { fold, cmp, escRe, shuffle } from './text'
+import { headKey } from './words'
 
 const CAP = 60
 
@@ -40,10 +41,12 @@ export function exParts(w) {
   return { before: w.ex.slice(0, m.i), match: m.t, after: w.ex.slice(m.i + m.t.length) }
 }
 
-function makeQ(item, pool) {
+// multi: la palabra tiene otros significados apuntados. Entonces «¿Qué significa
+// bank?» tendría más de una respuesta buena, así que se pregunta al revés.
+function makeQ(item, pool, multi) {
   const w = item.w
   if (item.k === 'mcq') {
-    const e2s = Math.random() < 0.5
+    const e2s = !multi && Math.random() < 0.5
     const seen = new Set([e2s ? fold(w.es) : cmp(w.en)])
     const opts = []
     for (const x of shuffle(pool)) {
@@ -78,7 +81,9 @@ export function buildQuestions(words, pool) {
       .sort((a, b) => b.pr - a.pr)
       .slice(0, CAP)
   }
-  return shuffle(items).map((it) => makeQ(it, pool))
+  const heads = new Map()
+  pool.forEach((x) => heads.set(headKey(x.en), (heads.get(headKey(x.en)) || 0) + 1))
+  return shuffle(items).map((it) => makeQ(it, pool, (heads.get(headKey(it.w.en)) || 0) > 1))
 }
 
 // Todas las formas en inglés que se aceptan como correctas: la propia palabra
