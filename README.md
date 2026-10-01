@@ -73,8 +73,9 @@ ya tenías «bank = banco», se guarda como un significado más y la lista los
 muestra juntos, cada uno con su frase, su categoría (n., v., adj.…), su matiz
 opcional («de un río») y su propio contador de fallos. Al apuntar puedes
 consultar las acepciones en [Free Dictionary API](https://freedictionaryapi.com)
-(o en [Wiktionary](https://en.wiktionary.org) si aquella falla) para
-rellenar la categoría y la frase de ejemplo.
+(o en [Wiktionary](https://en.wiktionary.org) si aquella falla): al elegir una acepción se
+rellenan la traducción al español (cuando el diccionario la tiene), la
+categoría y la frase de ejemplo.
 
 Si ya tenías la base de datos creada antes de esto, vuelve a ejecutar
 [`supabase/schema.sql`](supabase/schema.sql) (o solo sus dos líneas

@@ -19,6 +19,10 @@ const noteText = ref('')
 const dateVal = ref(today())
 const msg = ref(null)
 
+// Lo último que rellenó el diccionario: si eliges otra acepción se sustituye,
+// pero nunca se pisa lo que hayas escrito tú.
+let auto = { es: '', ex: '' }
+
 const enInput = ref(null)
 const esInput = ref(null)
 const exInput = ref(null)
@@ -42,6 +46,7 @@ watch(
 )
 
 function clearFields() {
+  auto = { es: '', ex: '' }
   enText.value = ''
   esText.value = ''
   exText.value = ''
@@ -72,7 +77,9 @@ async function lookUp() {
 }
 function useSense(s) {
   if (s.pos) posVal.value = s.pos
-  if (s.ex && !exText.value.trim()) exText.value = s.ex
+  const es = s.es.join(', ')
+  if (es && (!esText.value.trim() || esText.value === auto.es)) esText.value = auto.es = es
+  if (s.ex && (!exText.value.trim() || exText.value === auto.ex)) exText.value = auto.ex = s.ex
   dict.value = null
   nextTick(() => esInput.value?.focus())
 }
@@ -175,11 +182,16 @@ async function submit() {
         No se ha podido consultar el diccionario. <button class="mini" type="button" @click="lookUp">Reintentar</button>
       </p>
       <template v-else>
-        <p class="hint">Elige el significado que estás apuntando: se rellenan la categoría y la frase. La traducción la escribes tú.</p>
+        <p class="hint">
+          Elige el significado que estás apuntando: se rellenan la traducción (si la hay), la categoría y la frase. Puedes
+          corregirlas antes de añadir.
+        </p>
         <div class="dlist">
           <button v-for="(s, i) in dict.senses" :key="i" class="dsense" type="button" @click="useSense(s)">
+            <span v-if="s.es.length" class="des">{{ s.es.join(', ') }}</span>
             <span><i class="pos">{{ posLabel(s.pos) || s.posName }}</i><span lang="en">{{ s.def }}</span></span>
             <span v-if="s.ex" class="dex" lang="en">{{ s.ex }}</span>
+            <span v-else class="dex">Sin frase de ejemplo: escríbela tú.</span>
           </button>
         </div>
         <p class="dsrc">
