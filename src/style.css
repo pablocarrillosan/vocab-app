@@ -324,3 +324,4 @@ select.inp{appearance:auto}
 .dex{font-family:var(--read);font-style:italic;color:var(--muted);font-size:14.5px}
 .dsrc{margin:0;color:var(--muted);font-size:13px}
 .dsrc .mini{font-size:13px}
+.des{font-weight:700;color:var(--ink)}
