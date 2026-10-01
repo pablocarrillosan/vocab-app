@@ -72,7 +72,8 @@ Una palabra puede tener varios significados: si apuntas «bank = orilla» cuando
 ya tenías «bank = banco», se guarda como un significado más y la lista los
 muestra juntos, cada uno con su frase, su categoría (n., v., adj.…), su matiz
 opcional («de un río») y su propio contador de fallos. Al apuntar puedes
-consultar las acepciones en [dictionaryapi.dev](https://dictionaryapi.dev) para
+consultar las acepciones en [Free Dictionary API](https://freedictionaryapi.com)
+(o en [Wiktionary](https://en.wiktionary.org) si aquella falla) para
 rellenar la categoría y la frase de ejemplo.
 
 Si ya tenías la base de datos creada antes de esto, vuelve a ejecutar

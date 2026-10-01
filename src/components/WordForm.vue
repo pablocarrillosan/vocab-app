@@ -53,7 +53,7 @@ function clearFields() {
 const siblings = computed(() => (enText.value.trim() ? sensesOf(enText.value, props.editingWord?.id) : []))
 
 // Acepciones del diccionario para la palabra escrita. Se borran al cambiarla.
-const dict = ref(null) // { word, status: 'loading' | 'ok' | 'none' | 'error', senses }
+const dict = ref(null) // { word, source, status: 'loading' | 'ok' | 'none' | 'error', senses }
 const DICT_MAX = 12
 watch(enText, (v) => {
   if (dict.value && dict.value.word !== v.trim()) dict.value = null
@@ -63,9 +63,9 @@ async function lookUp() {
   if (!word) return
   dict.value = { word, status: 'loading', senses: [] }
   try {
-    const senses = await lookup(word)
+    const { source, senses } = await lookup(word)
     if (dict.value?.word !== word) return
-    dict.value = { word, status: senses.length ? 'ok' : 'none', senses: senses.slice(0, DICT_MAX) }
+    dict.value = { word, source, status: senses.length ? 'ok' : 'none', senses: senses.slice(0, DICT_MAX) }
   } catch (e) {
     if (dict.value?.word === word) dict.value = { word, status: 'error', senses: [] }
   }
@@ -182,7 +182,10 @@ async function submit() {
             <span v-if="s.ex" class="dex" lang="en">{{ s.ex }}</span>
           </button>
         </div>
-        <button class="mini" type="button" @click="dict = null">Cerrar el diccionario</button>
+        <p class="dsrc">
+          Fuente: {{ dict.source }} ·
+          <button class="mini" type="button" @click="dict = null">Cerrar el diccionario</button>
+        </p>
       </template>
     </div>
 
