@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref, reactive } from 'vue'
 import { KIND } from '../lib/verbPlan'
-import { questionCount } from '../lib/verbQuiz'
+import { examSize } from '../lib/verbQuiz'
 import { useVerbProgress } from '../composables/useVerbProgress'
 import { useVerbLevel } from '../composables/useVerbLevel'
 import SayButton from './SayButton.vue'
@@ -17,7 +17,7 @@ const { plan } = useVerbLevel()
 
 const p = computed(() => plan.value.planOf(props.num))
 const isLearn = computed(() => p.value.type === 'learn')
-const n = computed(() => questionCount(p.value, stats.value))
+const size = computed(() => examSize(p.value, stats.value))
 const missed = (v) => (stats.value[v.id]?.missed_count || 0) > 0
 const weak = computed(() => p.value.verbs.filter(missed))
 
@@ -50,10 +50,16 @@ function reveal(id) {
   <template v-if="isLearn">
     <p class="plan">
       Guía de {{ plan.guide.total }} minutos: unos {{ plan.guide.read }} leyendo cada verbo y diciendo la frase en voz alta, unos
-      {{ plan.guide.quiz }} con el examen ({{ n }} preguntas) y {{ plan.guide.fix }} para volver a los que falles.
+      {{ plan.guide.quiz }} con el examen y {{ plan.guide.fix }} para volver a los que falles.
+    </p>
+    <p class="plan">
+      El examen tiene {{ size.n }} ejercicios en cinco partes: decir qué significa cada verbo, elegir el que completa una frase,
+      escribirlo en el tiempo que se indica,
+      {{ p.k === 'irr' ? 'escribir el pasado y el participio de todos (y todos los tiempos de uno)' : 'conjugar dos de ellos en todos los tiempos' }}
+      y completar un texto con los {{ p.verbs.length }} verbos.
     </p>
     <p v-if="p.k === 'prep'" class="plan">
-      Fíjate bien en la preposición: en las preguntas de huecos solo verás el verbo y tendrás que escribirla tú.
+      Fíjate bien en la preposición: en la parte «Escribe el verbo» solo verás el verbo y tendrás que escribirla tú.
     </p>
     <label class="toggle"><input v-model="hideEs" type="checkbox" /> Ocultar traducciones (toca una para verla)</label>
     <div class="entries" :class="{ 'hide-es': hideEs }">
@@ -74,11 +80,11 @@ function reveal(id) {
 
   <template v-else>
     <p class="plan">
-      Este repaso tiene {{ n }} preguntas, unos {{ Math.max(10, Math.round(n * 0.33)) }} minutos.
+      Este repaso tiene {{ size.n }} ejercicios, unos {{ size.min }} minutos.
       {{
         p.type === 'month'
-          ? 'Entran primero los verbos que más has fallado y el resto se elige al azar.'
-          : 'Cada verbo de la semana sale una vez, y los que has fallado salen dos.'
+          ? 'Dos textos de días del mes y, hasta llegar a 60 verbos, primero los que más has fallado y el resto al azar.'
+          : 'Dos textos de días de la semana y una pregunta por cada uno de los demás verbos; los que has fallado salen otra vez.'
       }}
     </p>
     <p v-if="weak.length" class="plan">

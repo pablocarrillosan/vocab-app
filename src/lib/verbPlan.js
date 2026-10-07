@@ -1,14 +1,40 @@
 import { WEEKS as B2 } from '../data/verbsB2'
 import { WEEKS as C1 } from '../data/verbsC1'
+import { TEXTS as TEXTS_B2 } from '../data/textsB2'
+import { TEXTS as TEXTS_C1 } from '../data/textsC1'
 
 export const KIND = { reg: 'Regulares', irr: 'Irregulares', phr: 'Phrasal verbs', prep: 'Verbos con preposición' }
 export const MONTH_WEEKS = 4
 export const CUMULATIVE = 'acumulativo'
 
+// Texto de un día para el ejercicio de completar: los huecos van entre llaves
+// con el verbo y las respuestas que valen, {argue|argued/were arguing}. La pista
+// puede llevar palabras delante del verbo, como en gramática: {not / afford|…}.
+// Cada salto de línea empieza un párrafo.
+function parseText(raw, verbs) {
+  if (!raw) return null
+  const fields = []
+  const paras = raw.x.split('\n').map((line) => {
+    const segs = []
+    let last = 0
+    for (const m of line.matchAll(/\{([^{}|]+)\|([^{}]+)\}/g)) {
+      if (m.index > last) segs.push({ text: line.slice(last, m.index) })
+      const cue = m[1].trim()
+      const en = cue.split('/').pop().trim()
+      segs.push({ gap: fields.length, cue })
+      fields.push({ a: m[2].split('/').map((x) => x.trim()), w: verbs.find((v) => v.en === en) || null })
+      last = m.index + m[0].length
+    }
+    if (last < line.length) segs.push({ text: line.slice(last) })
+    return segs
+  })
+  return { title: raw.t, paras, fields }
+}
+
 // Los dos planes (B2 y C1) se construyen igual a partir de sus semanas. Los
 // resultados de sus días se guardan con un prefijo propio ('' en el B2, que ya
 // existía así, y 'c1-' en el C1) para que el progreso de uno no pise al otro.
-function buildPlan(id, label, WEEKS, prefix, guide) {
+function buildPlan(id, label, WEEKS, TEXTS, prefix, guide, tenses) {
   const VERBS = []
   const PLAN = []
   const keyOf = (num) => prefix + num
@@ -42,7 +68,7 @@ function buildPlan(id, label, WEEKS, prefix, guide) {
         VERBS.push(v)
         return v
       })
-      PLAN.push({ num, key: keyOf(num), week: wi + 1, type: 'learn', t: d.t, k: d.k, verbs })
+      PLAN.push({ num, key: keyOf(num), week: wi + 1, type: 'learn', t: d.t, k: d.k, verbs, text: parseText(TEXTS[wi]?.[di], verbs) })
     })
   })
   WEEKS.forEach((wk, wi) => {
@@ -68,6 +94,7 @@ function buildPlan(id, label, WEEKS, prefix, guide) {
     id,
     label,
     guide,
+    tenses,
     VERBS,
     PLAN,
     WEEKS_COUNT: WEEKS.length,
@@ -91,9 +118,12 @@ function buildPlan(id, label, WEEKS, prefix, guide) {
 
 // guide: minutos de un día de estudio (en total, leyendo, en el examen y
 // volviendo a los fallos). El C1 tiene 10 verbos al día en vez de 8.
+// tenses: filas de la tabla «Todos los tiempos» (verbQuiz.js); el C1 añade el
+// futuro perfecto y el condicional perfecto.
+const TENSES = ['ps', 'pc', 'past', 'pastc', 'pp', 'ppc', 'pastp', 'fut']
 export const LEVELS = {
-  b2: buildPlan('b2', 'B2', B2, '', { total: 30, read: 15, quiz: 10, fix: 5 }),
-  c1: buildPlan('c1', 'C1', C1, 'c1-', { total: 35, read: 18, quiz: 12, fix: 5 }),
+  b2: buildPlan('b2', 'B2', B2, TEXTS_B2, '', { total: 35, read: 15, quiz: 15, fix: 5 }, TENSES),
+  c1: buildPlan('c1', 'C1', C1, TEXTS_C1, 'c1-', { total: 40, read: 18, quiz: 17, fix: 5 }, [...TENSES, 'futp', 'condp']),
 }
 
 export function reviewSub(p) {

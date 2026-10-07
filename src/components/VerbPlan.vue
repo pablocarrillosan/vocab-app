@@ -34,8 +34,8 @@ const preview = computed(() => {
   if (!p) return ''
   if (p.type === 'learn') return p.verbs.map((v) => v.en).join(', ')
   return p.type === 'month'
-    ? 'Repaso de los ' + p.verbs.length + ' verbos del mes. Los que más has fallado salen primero.'
-    : 'Repaso de los ' + p.verbs.length + ' verbos de la semana, con una pregunta por verbo.'
+    ? 'Repaso de los ' + p.verbs.length + ' verbos del mes, con dos textos. Los que más has fallado salen primero.'
+    : 'Repaso de los ' + p.verbs.length + ' verbos de la semana: dos textos y una pregunta por cada uno de los demás.'
 })
 function toggle(w, open) {
   if (open) openWeeks.add(w)

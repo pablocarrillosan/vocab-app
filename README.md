@@ -52,11 +52,13 @@ Pages...). Pasos generales:
 
 ```
 src/
-  lib/            fechas, comparación de texto y el motor de preguntas del examen
+  lib/            fechas, comparación de texto, el motor de preguntas del examen y,
+                  en verbForms.js, las formas de cada verbo y el tiempo de su frase
   composables/    sesión (useAuth), palabras (useWords), resultados (useExamResults)
   components/     formulario, filas de palabras, semanas, examen, pantalla de acceso
   data/verbsB2.js los 384 verbos del plan B2 de 8 semanas
   data/verbsC1.js los 480 verbos del plan C1 de 8 semanas (10 al día, con verbos + preposición)
+  data/textsB2.js, data/textsC1.js un texto con huecos por cada día de estudio de los dos planes
   data/grammarB1.js los 10 bloques del repaso de gramática B1 (explicación y cinco tandas de ejercicios)
   App.vue         áreas "Vocabulario" (Hoy / Palabras), "Verbos" y "Gramática", y el examen
 supabase/
@@ -67,6 +69,26 @@ El examen mezcla tres tipos de pregunta: elegir el significado, escribir la
 palabra a partir del significado, y rellenar el hueco de la frase de ejemplo
 (cuando la palabra tiene una). Las que fallas se repiten con más frecuencia en
 el siguiente examen.
+
+El examen de verbos (B2 y C1) va por cinco partes, de reconocer el verbo a
+usarlo:
+
+1. **Significado**: el verbo en inglés y cuatro significados en español.
+2. **Elige el verbo**: la frase de ejemplo con un hueco y cuatro verbos, todos
+   en la forma que pide la frase.
+3. **Escribe el verbo**: el mismo hueco para escribirlo, con el tiempo indicado
+   encima (*pasado simple*, *presente perfecto · participio*, *pasiva*…).
+4. **Todos los tiempos**: la tabla de un verbo conjugado en ocho tiempos en el
+   B2 (del presente simple al futuro) y diez en el C1 (más el futuro perfecto y
+   el condicional perfecto). Los días de irregulares añaden la tabla con el
+   pasado y el participio de todos.
+5. **Completa el texto**: un texto con los verbos del día, cada uno en el tiempo
+   que pide el contexto.
+
+En las tablas y los textos cada hueco cuenta un punto, y valen las
+contracciones (*didn't* o *did not*) y la ortografía americana (*-ize*). Los
+repasos semanales, mensuales y el acumulativo incluyen dos textos y una
+pregunta suelta para el resto de verbos.
 
 Una palabra puede tener varios significados: si apuntas «bank = orilla» cuando
 ya tenías «bank = banco», se guarda como un significado más y la lista los

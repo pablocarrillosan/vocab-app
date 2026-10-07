@@ -11,7 +11,8 @@ function norm(s) {
     .replace(/\s+/g, ' ')
 }
 
-function expand(s) {
+// También la usan los ejercicios de verbos (verbForms.js).
+export function expand(s) {
   s = norm(s)
     .replace(/\bwon't\b/g, 'will not')
     .replace(/\bcan't\b/g, 'can not')
