@@ -122,8 +122,8 @@ function buildPlan(id, label, WEEKS, TEXTS, prefix, guide, tenses) {
 // futuro perfecto y el condicional perfecto.
 const TENSES = ['ps', 'pc', 'past', 'pastc', 'pp', 'ppc', 'pastp', 'fut']
 export const LEVELS = {
-  b2: buildPlan('b2', 'B2', B2, TEXTS_B2, '', { total: 35, read: 15, quiz: 15, fix: 5 }, TENSES),
-  c1: buildPlan('c1', 'C1', C1, TEXTS_C1, 'c1-', { total: 40, read: 18, quiz: 17, fix: 5 }, [...TENSES, 'futp', 'condp']),
+  b2: buildPlan('b2', 'B2', B2, TEXTS_B2, '', { total: 30, read: 15, quiz: 10, fix: 5 }, TENSES),
+  c1: buildPlan('c1', 'C1', C1, TEXTS_C1, 'c1-', { total: 35, read: 18, quiz: 12, fix: 5 }, [...TENSES, 'futp', 'condp']),
 }
 
 export function reviewSub(p) {

@@ -1,22 +1,14 @@
-import { cmp, shuffle } from './text'
+import { cmp, fold, shuffle } from './text'
 import { LEVELS } from './verbPlan'
 import { formsOf, slotOf, sameForm } from './verbForms'
 
 const CAP = 60 // verbos como mucho en un repaso (los de los textos cuentan)
 const TEXTS = 2 // textos en los repasos
 
-// El examen va por partes, de reconocer el verbo a usarlo en un texto. Las
-// preguntas tienen la misma forma que las del examen de palabras para usar el
-// mismo QuizView; las de varios huecos (tablas y textos) llevan sus respuestas
-// en fields.
-export const PARTS = [
-  ['mean', 'Significado'],
-  ['pick', 'Elige el verbo'],
-  ['cloze', 'Escribe el verbo'],
-  ['table', 'Todos los tiempos'],
-  ['text', 'Completa el texto'],
-]
-const ORDER = Object.fromEntries(PARTS.map(([k], i) => [k, i]))
+// Las preguntas de verbos salen mezcladas. Tienen la misma forma que las del
+// examen de palabras para usar el mismo QuizView; las de varios huecos (tablas y
+// textos) llevan sus respuestas en fields. part dice de qué tipo es cada una
+// (mean, pick, cloze, table o text) para no repetir tipo con el mismo verbo.
 
 // Significados sin las aclaraciones entre paréntesis:
 // "abstenerse de (votar, beber)" -> ["abstenerse de"].
@@ -46,7 +38,7 @@ function threeOf(list, answer, key = (x) => x) {
   return out
 }
 
-// 1. Significado: el verbo y cuatro significados en español.
+// 1. Significado: el verbo y cuatro significados en español para elegir...
 function mean(v) {
   const opts = threeOf(
     others(v).map((x) => x.es),
@@ -54,6 +46,9 @@ function mean(v) {
   )
   return { type: 'mcq', part: 'mean', dir: 'e2s', w: v, answer: v.es, options: shuffle([v.es, ...opts]) }
 }
+// ...o el significado escrito en español (se corrige con meaningOk).
+const write = (v) => ({ type: 'meanw', part: 'mean', w: v })
+const meaningQ = (v) => (Math.random() < 0.5 ? mean(v) : write(v))
 
 // 2. Elige el verbo: la frase con hueco y cuatro verbos en la misma forma que
 // pide la frase (si es «argued», las otras opciones también van en pasado).
@@ -171,7 +166,7 @@ function tableVerbs(vs, n, stats) {
 // Una pregunta suelta de un tipo al azar (en los repasos). avoid: parte que no
 // debe repetirse cuando el verbo sale dos veces.
 function single(v, avoid) {
-  const kinds = [mean, pick, cloze]
+  const kinds = [meaningQ, pick, cloze]
   if (v.k === 'irr') kinds.push((x) => forms([x]))
   for (const k of shuffle(kinds)) {
     const q = k(v)
@@ -179,10 +174,6 @@ function single(v, avoid) {
   }
   return mean(v)
 }
-
-// Ordena por partes, cada una barajada; en la de tablas, la de irregulares primero.
-const rank = (q) => ORDER[q.part] + (q.kind === 'tenses' ? 0.5 : 0)
-const byPart = (qs) => shuffle(qs).sort((a, b) => rank(a) - rank(b))
 
 // Textos de los repasos: de días distintos, elegidos al azar entre los que
 // tienen verbos del repaso.
@@ -201,12 +192,15 @@ function withExtras(texts, verbs, stats, tableFrom) {
 // Preguntas de un día del plan (estudio, repaso semanal o mensual).
 export function planQuestions(p, stats) {
   if (p.type === 'learn') {
+    // Cada verbo sale una vez por su significado (elegirlo o escribirlo) y otra
+    // en su frase (elegir el verbo o escribirlo), mitad y mitad, para que la
+    // misma frase no salga dos veces.
     const vs = p.verbs
-    const qs = [...vs.map(mean), ...vs.map(pick).filter(Boolean), ...vs.map(cloze)]
+    const qs = [...shuffle(vs).map((v, i) => (i % 2 ? mean(v) : write(v))), ...shuffle(vs).map((v, i) => (i % 2 && pick(v)) || cloze(v))]
     if (p.k === 'irr') qs.push(forms(vs))
     qs.push(...tableVerbs(vs, p.k === 'irr' ? 1 : 2, stats).map(tenses))
     if (p.text) qs.push(textQ(p))
-    return byPart(qs)
+    return shuffle(qs)
   }
   const texts = reviewTexts(p.verbs)
   const covered = coveredBy(texts)
@@ -215,12 +209,12 @@ export function planQuestions(p, stats) {
     // Una pregunta por verbo (o su hueco en un texto), y otra más para los que fallas.
     const qs = withExtras(texts, rest, stats, p.verbs)
     p.verbs.filter(missed(stats)).forEach((v) => qs.push(single(v, qs.find((q) => q.w === v)?.part)))
-    return byPart(qs)
+    return shuffle(qs)
   }
   // Mensual: primero los que más fallas y el resto al azar, hasta CAP verbos.
   const weak = rest.filter(missed(stats)).sort(byMissed(stats)).slice(0, 30)
   const fill = shuffle(rest.filter((v) => !weak.includes(v))).slice(0, Math.max(0, CAP - covered.size - weak.length))
-  return byPart(withExtras(texts, [...weak, ...fill], stats, weak.length ? weak : rest))
+  return shuffle(withExtras(texts, [...weak, ...fill], stats, weak.length ? weak : rest))
 }
 
 // Repaso acumulativo: todo lo estudiado, primero lo que más fallas y después lo
@@ -231,20 +225,21 @@ export function cumulativeQuestions(verbs, stats) {
   const picked = shuffle(verbs.filter((v) => !covered.has(v.id)))
     .sort((a, b) => missedOf(stats, b) - missedOf(stats, a) || seenOf(stats, a).localeCompare(seenOf(stats, b)))
     .slice(0, Math.max(0, CAP - covered.size))
-  return byPart(withExtras(texts, picked, stats, picked.slice(0, 10)))
+  return shuffle(withExtras(texts, picked, stats, picked.slice(0, 10)))
 }
 
 export function missedQuestions(verbs, stats) {
   const weak = verbs.filter(missed(stats)).sort(byMissed(stats)).slice(0, CAP)
-  return byPart(withExtras([], weak, stats, weak))
+  return shuffle(withExtras([], weak, stats, weak))
 }
 
-// Ejercicios de un día del plan y minutos aproximados, para avisar antes de
-// empezar: un texto o una tabla llevan más tiempo que una pregunta suelta.
-const MINUTES = { text: 3, grid: 1.5 }
+// Preguntas de un día del plan y minutos aproximados, para avisar antes de
+// empezar: un texto o una tabla llevan más tiempo que escribir una respuesta, y
+// escribirla, más que elegirla.
+const MINUTES = { text: 3, grid: 1.5, cloze: 1 / 3, meanw: 1 / 3 }
 export function examSize(p, stats) {
   const qs = planQuestions(p, stats)
-  return { n: qs.length, min: Math.max(5, Math.round(qs.reduce((m, q) => m + (MINUTES[q.type] || 1 / 3), 0))) }
+  return { n: qs.length, min: Math.max(5, Math.round(qs.reduce((m, q) => m + (MINUTES[q.type] || 1 / 6), 0))) }
 }
 
 export function acceptedVerbAnswers(q) {
@@ -255,4 +250,48 @@ export function acceptedVerbAnswers(q) {
 // o fallo por hueco.
 export function gradeFields(q, vals) {
   return q.fields.map((f, i) => Boolean((vals[i] || '').trim()) && sameForm(vals[i], f.a, f.pre))
+}
+
+// Corrección del significado escrito: vale cualquiera de los de la lista, sin
+// acentos ni mayúsculas, con o sin el «se» opcional (esconder(se)) y sin la
+// preposición del final (confiar en → confiar), salvo cuando sin ella el verbo
+// significa otra cosa (pasar por → pasar). Si escribes varios, separados por
+// comas o con «o», basta con que uno esté en la lista, y en las palabras largas
+// se perdona una letra (argumetar).
+const PREP_END = / (de|a|en|por|para|sobre|contra|entre)$/
+const NO_STRIP = new Set(['pasar', 'dar', 'salir', 'dejar', 'ponerse', 'responder', 'pagar', 'cargar', 'faltar', 'apuntar', 'deshacerse', 'ascender', 'proceder', 'rayar'])
+const plain = (s) => fold(s).replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim()
+function meaningsOf(v) {
+  const out = new Set()
+  const add = (es) =>
+    es
+      .split(/[;,]/)
+      .map(plain)
+      .filter(Boolean)
+      .forEach((g) => {
+        out.add(g)
+        const bare = g.replace(PREP_END, '')
+        if (bare !== g && !NO_STRIP.has(bare)) out.add(bare)
+      })
+  const es = v.es.replace(/\s\([^)]*\)/g, '') // fuera las notas: «abstenerse de (votar, beber)»
+  add(es.replace(/\([^)]*\)/g, '')) // esconder(se) → esconder
+  add(es.replace(/\(([^)]*)\)/g, '$1')) // esconder(se) → esconderse
+  return out
+}
+// Una letra de más, de menos o cambiada.
+function oneOff(a, b) {
+  if (Math.abs(a.length - b.length) > 1) return false
+  let i = 0
+  while (i < a.length && a[i] === b[i]) i++
+  const [x, y] = a.length >= b.length ? [a, b] : [b, a]
+  return x.slice(i + 1) === y.slice(x.length === y.length ? i + 1 : i)
+}
+export function meaningOk(v, answer) {
+  const ok = meaningsOf(v)
+  return fold(answer)
+    .replace(/\([^)]*\)/g, ' ') // lo que escribas entre paréntesis no cuenta
+    .split(/[;,/]| o | y /)
+    .map(plain)
+    .filter(Boolean)
+    .some((a) => ok.has(a) || [...ok].some((g) => g.length >= 8 && oneOff(a, g)))
 }

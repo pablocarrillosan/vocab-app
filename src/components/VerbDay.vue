@@ -53,13 +53,13 @@ function reveal(id) {
       {{ plan.guide.quiz }} con el examen y {{ plan.guide.fix }} para volver a los que falles.
     </p>
     <p class="plan">
-      El examen tiene {{ size.n }} ejercicios en cinco partes: decir qué significa cada verbo, elegir el que completa una frase,
-      escribirlo en el tiempo que se indica,
-      {{ p.k === 'irr' ? 'escribir el pasado y el participio de todos (y todos los tiempos de uno)' : 'conjugar dos de ellos en todos los tiempos' }}
-      y completar un texto con los {{ p.verbs.length }} verbos.
+      El examen tiene {{ size.n }} preguntas de tipos mezclados: qué significa cada verbo (eligiéndolo o escribiéndolo en español), el
+      verbo que falta en su frase (eligiéndolo o escribiéndolo en el tiempo que se indica),
+      {{ p.k === 'irr' ? 'el pasado y el participio de todos, todos los tiempos de uno' : 'todos los tiempos de dos de ellos' }}
+      y un texto con los {{ p.verbs.length }} verbos.
     </p>
     <p v-if="p.k === 'prep'" class="plan">
-      Fíjate bien en la preposición: en la parte «Escribe el verbo» solo verás el verbo y tendrás que escribirla tú.
+      Fíjate bien en la preposición: cuando tengas que escribir el verbo de la frase, solo verás el verbo y tendrás que escribirla tú.
     </p>
     <label class="toggle"><input v-model="hideEs" type="checkbox" /> Ocultar traducciones (toca una para verla)</label>
     <div class="entries" :class="{ 'hide-es': hideEs }">
@@ -80,7 +80,7 @@ function reveal(id) {
 
   <template v-else>
     <p class="plan">
-      Este repaso tiene {{ size.n }} ejercicios, unos {{ size.min }} minutos.
+      Este repaso tiene {{ size.n }} preguntas, unos {{ size.min }} minutos.
       {{
         p.type === 'month'
           ? 'Dos textos de días del mes y, hasta llegar a 60 verbos, primero los que más has fallado y el resto al azar.'

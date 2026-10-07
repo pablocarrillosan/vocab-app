@@ -70,25 +70,28 @@ palabra a partir del significado, y rellenar el hueco de la frase de ejemplo
 (cuando la palabra tiene una). Las que fallas se repiten con más frecuencia en
 el siguiente examen.
 
-El examen de verbos (B2 y C1) va por cinco partes, de reconocer el verbo a
-usarlo:
+El examen de verbos (B2 y C1) mezcla estos tipos de pregunta:
 
-1. **Significado**: el verbo en inglés y cuatro significados en español.
-2. **Elige el verbo**: la frase de ejemplo con un hueco y cuatro verbos, todos
-   en la forma que pide la frase.
-3. **Escribe el verbo**: el mismo hueco para escribirlo, con el tiempo indicado
-   encima (*pasado simple*, *presente perfecto · participio*, *pasiva*…).
-4. **Todos los tiempos**: la tabla de un verbo conjugado en ocho tiempos en el
-   B2 (del presente simple al futuro) y diez en el C1 (más el futuro perfecto y
-   el condicional perfecto). Los días de irregulares añaden la tabla con el
-   pasado y el participio de todos.
-5. **Completa el texto**: un texto con los verbos del día, cada uno en el tiempo
-   que pide el contexto.
+- **Significado**: elegirlo entre cuatro o escribirlo en español. Al escribirlo
+  vale cualquiera de los significados de la lista (sin acentos y con o sin la
+  preposición final); si tu traducción también es buena pero no está en la
+  lista, el botón «Mi respuesta vale» la da por buena.
+- **Elige el verbo**: la frase de ejemplo con un hueco y cuatro verbos, todos
+  en la forma que pide la frase.
+- **Escribe el verbo**: el mismo hueco para escribirlo, con el tiempo indicado
+  encima (*pasado simple*, *presente perfecto · participio*, *pasiva*…).
+- **Todos los tiempos**: la tabla de un verbo conjugado en ocho tiempos en el
+  B2 (del presente simple al futuro) y diez en el C1 (más el futuro perfecto y
+  el condicional perfecto). Los días de irregulares añaden la tabla con el
+  pasado y el participio de todos.
+- **Completa el texto**: un texto con los verbos del día, cada uno en el tiempo
+  que pide el contexto.
 
-En las tablas y los textos cada hueco cuenta un punto, y valen las
-contracciones (*didn't* o *did not*) y la ortografía americana (*-ize*). Los
-repasos semanales, mensuales y el acumulativo incluyen dos textos y una
-pregunta suelta para el resto de verbos.
+En el examen de cada día, cada verbo sale una vez por su significado y otra en
+su frase, y todas las preguntas van mezcladas. En las tablas y los textos cada
+hueco cuenta un punto, y valen las contracciones (*didn't* o *did not*) y la
+ortografía americana (*-ize*). Los repasos semanales, mensuales y el
+acumulativo incluyen dos textos y una pregunta suelta para el resto de verbos.
 
 Una palabra puede tener varios significados: si apuntas «bank = orilla» cuando
 ya tenías «bank = banco», se guarda como un significado más y la lista los
