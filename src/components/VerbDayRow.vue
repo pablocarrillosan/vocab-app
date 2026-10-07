@@ -17,7 +17,7 @@ const { results } = useVerbProgress()
 const rev = computed(() => props.p.type !== 'learn')
 const done = computed(() => results.value[props.p.key])
 const sub = computed(() => {
-  if (props.locked) return (props.p.type === 'month' ? props.p.verbs.length + ' verbos, 60 preguntas. ' : '') + 'Se abre el día ' + props.p.num
+  if (props.locked) return (props.p.type === 'month' ? props.p.verbs.length + ' verbos, hasta 60 en el repaso. ' : '') + 'Se abre el día ' + props.p.num
   return rev.value ? reviewSub(props.p) : KIND[props.p.k]
 })
 </script>
