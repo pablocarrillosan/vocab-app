@@ -72,26 +72,29 @@ el siguiente examen.
 
 El examen de verbos (B2 y C1) mezcla estos tipos de pregunta:
 
-- **Significado**: elegirlo entre cuatro o escribirlo en español. Al escribirlo
-  vale cualquiera de los significados de la lista (sin acentos y con o sin la
-  preposición final); si tu traducción también es buena pero no está en la
-  lista, el botón «Mi respuesta vale» la da por buena.
+- **Formas y significado**: de cada verbo del examen escribes el pasado, el
+  participio y lo que significa en español. En el significado vale cualquiera
+  de los de la lista (sin acentos y con o sin la preposición final); si tu
+  traducción también es buena pero no está en la lista, el botón «Mi
+  significado vale» la da por buena.
 - **Elige el verbo**: la frase de ejemplo con un hueco y cuatro verbos, todos
   en la forma que pide la frase.
 - **Escribe el verbo**: el mismo hueco para escribirlo, con el tiempo indicado
   encima (*pasado simple*, *presente perfecto · participio*, *pasiva*…).
 - **Todos los tiempos**: la tabla de un verbo conjugado en ocho tiempos en el
   B2 (del presente simple al futuro) y diez en el C1 (más el futuro perfecto y
-  el condicional perfecto). Los días de irregulares añaden la tabla con el
-  pasado y el participio de todos.
+  el condicional perfecto).
 - **Completa el texto**: un texto con los verbos del día, cada uno en el tiempo
   que pide el contexto.
 
-En el examen de cada día, cada verbo sale una vez por su significado y otra en
-su frase, y todas las preguntas van mezcladas. En las tablas y los textos cada
-hueco cuenta un punto, y valen las contracciones (*didn't* o *did not*) y la
-ortografía americana (*-ize*). Los repasos semanales, mensuales y el
-acumulativo incluyen dos textos y una pregunta suelta para el resto de verbos.
+En el examen de cada día, cada verbo tiene su pregunta de formas y significado
+y otra con su frase (elegir o escribir el verbo), más dos tablas de tiempos y
+el texto. Las preguntas van mezcladas, pero ninguna sale antes que la de formas
+de su verbo, para que nada te dé hechas las respuestas. Cada hueco cuenta un
+punto, y valen las contracciones (*didn't* o *did not*) y la ortografía
+americana (*-ize*). Los repasos (semanal, mensual y acumulativo) hacen la
+pregunta de formas y significado de hasta 60 verbos y añaden dos textos y una
+tabla de tiempos.
 
 Una palabra puede tener varios significados: si apuntas «bank = orilla» cuando
 ya tenías «bank = banco», se guarda como un significado más y la lista los

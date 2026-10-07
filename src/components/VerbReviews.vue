@@ -35,8 +35,8 @@ const weeks = computed(() => {
     <h2>Todo lo que has estudiado</h2>
     <template v-if="studied.length">
       <p class="pv">
-        {{ studied.length }} verbos de {{ nDays }} {{ nDays === 1 ? 'día' : 'días' }} de estudio. Dos textos y hasta 60 verbos: primero los que fallas
-        y los que llevas más tiempo sin ver.
+        {{ studied.length }} verbos de {{ nDays }} {{ nDays === 1 ? 'día' : 'días' }} de estudio. Hasta 60, con su pasado, participio y
+        significado, y dos textos: primero los que fallas y los que llevas más tiempo sin ver.
       </p>
       <div class="kchips">
         <span v-for="x in byKind" :key="x.k" :class="'k-' + x.k">{{ x.n }} {{ KLABEL[x.k] }}</span>

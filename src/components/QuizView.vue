@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { cmp } from '../lib/text'
-import { gradeFields, meaningOk } from '../lib/verbQuiz'
+import { gradeFields } from '../lib/verbQuiz'
 import { TENSES } from '../lib/verbForms'
 import { meaning } from '../lib/words'
 import SayButton from './SayButton.vue'
@@ -34,7 +34,7 @@ const vals = ref([]) // lo escrito en cada hueco de la pregunta
 const marks = ref([]) // tras comprobar, si cada hueco está bien
 const results = ref([]) // { q, ok, pts, verbs: [{ w, ok }], sent }
 const finished = ref(false)
-const overruled = ref(false) // «Mi respuesta vale» en la pregunta actual
+const overruled = ref(false) // «Mi significado vale» en la pregunta actual
 
 const current = computed(() => questions.value[i.value])
 const hits = computed(() => results.value.reduce((n, r) => n + r.pts, 0))
@@ -62,13 +62,17 @@ function commit() {
   r.sent = true
   r.verbs.forEach((x) => emit('answer', { w: x.w }, x.ok))
 }
-// El significado escrito no estaba en la lista, pero era bueno: cuenta como acierto.
+// El significado escrito no estaba en la lista, pero era bueno: ese hueco
+// cuenta como acierto.
+const meanWrong = computed(() => checked.value && !!current.value?.fields?.some((f, k) => f.mean && !marks.value[k]))
 function overrule() {
+  const q = current.value
   const r = results.value[results.value.length - 1]
-  r.ok = true
-  r.pts = 1
-  r.verbs = r.verbs.map((x) => ({ ...x, ok: true }))
-  lastOk.value = true
+  marks.value = marks.value.map((ok, k) => ok || !!q.fields[k].mean)
+  r.pts = marks.value.filter(Boolean).length
+  r.verbs = verbsOf(q, marks.value)
+  r.ok = r.pts === q.fields.length
+  lastOk.value = r.ok
   overruled.value = true
 }
 function leave() {
@@ -96,7 +100,7 @@ function check() {
     const pts = marks.value.filter(Boolean).length
     return record(pts === q.fields.length, pts, verbsOf(q, marks.value))
   }
-  const ok = q.type === 'meanw' ? meaningOk(q.w, vals.value[0]) : props.accepted(q).some((a) => cmp(a) === cmp(vals.value[0]))
+  const ok = props.accepted(q).some((a) => cmp(a) === cmp(vals.value[0]))
   record(ok, ok ? 1 : 0, [{ w: q.w, ok }])
 }
 function setVal(k, v) {
@@ -189,28 +193,13 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
       <span>{{ hits }} {{ hits === 1 ? 'acierto' : 'aciertos' }}</span>
     </div>
 
-    <template v-if="current.type === 'mcq' || current.type === 'meanw'">
-      <h3 v-if="current.dir !== 's2e'" class="qprompt">
+    <template v-if="current.type === 'mcq'">
+      <h3 v-if="current.dir === 'e2s'" class="qprompt">
         ¿Qué significa <span class="qw" :class="kCls(current.w)" lang="en">{{ current.w.en }}</span>? <SayButton :text="current.w.en" />
       </h3>
       <h3 v-else class="qprompt">
         ¿Cómo se dice <span class="qw">{{ current.w.es }}</span><span v-if="current.w.note" class="qnote"> ({{ current.w.note }})</span> en inglés?
       </h3>
-      <template v-if="current.type === 'meanw'">
-        <p class="qhelp">Escríbelo en español.</p>
-        <input
-          :value="vals[0] || ''"
-          class="blank"
-          :class="{ ok: checked && lastOk, bad: checked && !lastOk }"
-          style="width: min(100%, 24ch); font-size: 22px; padding: 6px 10px"
-          :disabled="checked"
-          autocomplete="off"
-          spellcheck="false"
-          lang="es"
-          aria-label="Significado en español"
-          @input="setVal(0, $event.target.value)"
-        />
-      </template>
     </template>
 
     <template v-else-if="current.type === 'pick'">
@@ -240,7 +229,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
           @input="setVal(0, $event.target.value)"
         /><template v-if="current.base"> <span class="base">({{ current.base }})</span></template>{{ around.after }}
       </p>
-      <p class="hint">Pista: {{ meaning(current.w) }}</p>
+      <p v-if="!current.base" class="hint">Pista: {{ meaning(current.w) }}</p>
     </template>
 
     <QuizGrid v-else-if="current.type === 'grid'" :q="current" :vals="vals" :marks="marks" :checked="checked" @input="setVal" />
@@ -282,16 +271,15 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
     <div v-if="checked" class="fb" :class="lastOk ? 'ok' : 'bad'">
       <template v-if="lastOk">
         <b class="t">{{ overruled ? 'Dado por bueno' : 'Correcto' }}</b>
-        <span v-if="current.type === 'meanw'"><b lang="en">{{ current.w.en }}</b> significa {{ meaning(current.w) }}.</span>
+        <span v-if="current.kind === 'core'"><b lang="en">{{ current.w.en }}</b> significa {{ meaning(current.w) }}.</span>
       </template>
       <template v-else-if="current.fields">
         <b class="t">{{ lastPts }} de {{ current.fields.length }} bien</b>
         <span>Junto a cada hueco en rojo tienes la respuesta.</span>
+        <button v-if="meanWrong" class="btn ghost small over" type="button" @click="overrule">Mi significado vale</button>
       </template>
-      <template v-else-if="current.type === 'mcq' || current.type === 'meanw'">
-        <b class="t">{{ current.type === 'mcq' ? 'No es esa' : 'No es ninguno de sus significados' }}</b
-        ><span><b lang="en">{{ current.w.en }}</b> significa {{ meaning(current.w) }}.</span>
-        <button v-if="current.type === 'meanw'" class="btn ghost small over" type="button" @click="overrule">Mi respuesta vale</button>
+      <template v-else-if="current.type === 'mcq'">
+        <b class="t">No es esa</b><span><b lang="en">{{ current.w.en }}</b> significa {{ meaning(current.w) }}.</span>
       </template>
       <template v-else-if="current.type === 'pick'">
         <b class="t">Era «{{ current.answer }}»</b><span><b lang="en">{{ current.w.en }}</b> significa {{ meaning(current.w) }}.</span>

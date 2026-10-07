@@ -346,15 +346,12 @@ select.inp{appearance:auto}
 .qcell .blank{font-family:var(--read);font-size:18px;line-height:1.6;width:100%;max-width:17rem;flex:1 1 9rem;text-align:left}
 .qcol{width:100%;color:var(--muted);font-size:14px;font-weight:600}
 .qgrid .sol{width:100%;font-family:var(--read);font-size:15px;color:var(--bad)}
-.qgrid.forms .qrow{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(0,1fr)}
-.qgrid.forms .qrow.head{padding-bottom:0;border:0;color:var(--muted);font-size:14px;font-weight:600}
-.qgrid.forms .qlab b{font-family:var(--disp);font-size:18px;color:var(--c,var(--irr))}
-.qgrid.forms .qcell .blank{max-width:none}
+.qgrid.core .qrow{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.4fr);border:0}
+.qgrid.core .qcell .blank{max-width:none}
 @media (max-width:560px){
   .qrow{grid-template-columns:minmax(0,1fr)}
-  .qgrid.forms .qrow{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
-  .qgrid.forms .qlab{grid-column:1/-1}
-  .qgrid.forms .qrow.head{display:none}
+  .qgrid.core .qrow{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .qgrid.core .qcell:last-child{grid-column:1/-1}
 }
 .qtext p{font-family:var(--read);font-size:clamp(17px,3.8vw,19px);line-height:2.3;margin:0 0 12px;max-width:68ch}
 .qtext .blank{line-height:1.5;text-align:left}

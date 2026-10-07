@@ -53,10 +53,9 @@ function reveal(id) {
       {{ plan.guide.quiz }} con el examen y {{ plan.guide.fix }} para volver a los que falles.
     </p>
     <p class="plan">
-      El examen tiene {{ size.n }} preguntas de tipos mezclados: qué significa cada verbo (eligiéndolo o escribiéndolo en español), el
-      verbo que falta en su frase (eligiéndolo o escribiéndolo en el tiempo que se indica),
-      {{ p.k === 'irr' ? 'el pasado y el participio de todos, todos los tiempos de uno' : 'todos los tiempos de dos de ellos' }}
-      y un texto con los {{ p.verbs.length }} verbos.
+      El examen tiene {{ size.n }} preguntas mezcladas. De cada verbo escribes el pasado, el participio y lo que significa, y lo usas en
+      su frase (eligiéndolo o escribiéndolo en el tiempo que se indica). Además hay dos tablas con todos los tiempos de un verbo y un
+      texto con los {{ p.verbs.length }} verbos.
     </p>
     <p v-if="p.k === 'prep'" class="plan">
       Fíjate bien en la preposición: cuando tengas que escribir el verbo de la frase, solo verás el verbo y tendrás que escribirla tú.
@@ -83,8 +82,8 @@ function reveal(id) {
       Este repaso tiene {{ size.n }} preguntas, unos {{ size.min }} minutos.
       {{
         p.type === 'month'
-          ? 'Dos textos de días del mes y, hasta llegar a 60 verbos, primero los que más has fallado y el resto al azar.'
-          : 'Dos textos de días de la semana y una pregunta por cada uno de los demás verbos; los que has fallado salen otra vez.'
+          ? 'Hasta 60 verbos, primero los que más has fallado y el resto al azar, con el pasado, el participio y el significado de cada uno, dos textos y una tabla de tiempos.'
+          : 'El pasado, el participio y el significado de cada verbo, dos textos y una tabla de tiempos; los que has fallado salen otra vez en otra pregunta.'
       }}
     </p>
     <p v-if="weak.length" class="plan">

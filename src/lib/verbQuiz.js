@@ -2,13 +2,15 @@ import { cmp, fold, shuffle } from './text'
 import { LEVELS } from './verbPlan'
 import { formsOf, slotOf, sameForm } from './verbForms'
 
-const CAP = 60 // verbos como mucho en un repaso (los de los textos cuentan)
+const CAP = 60 // verbos como mucho en un repaso, cada uno con su pregunta de formas
 const TEXTS = 2 // textos en los repasos
 
 // Las preguntas de verbos salen mezcladas. Tienen la misma forma que las del
-// examen de palabras para usar el mismo QuizView; las de varios huecos (tablas y
-// textos) llevan sus respuestas en fields. part dice de qué tipo es cada una
-// (mean, pick, cloze, table o text) para no repetir tipo con el mismo verbo.
+// examen de palabras para usar el mismo QuizView; las de varios huecos (formas,
+// tablas y textos) llevan sus respuestas en fields.
+// Cada verbo del examen tiene su pregunta de formas: pasado, participio y
+// significado. Ninguna otra pregunta de ese verbo sale antes (mixed), para que
+// nada te dé hechas las respuestas.
 
 // Significados sin las aclaraciones entre paréntesis:
 // "abstenerse de (votar, beber)" -> ["abstenerse de"].
@@ -38,17 +40,32 @@ function threeOf(list, answer, key = (x) => x) {
   return out
 }
 
-// 1. Significado: el verbo y cuatro significados en español para elegir...
+// 1. Formas y significado: el pasado, el participio y la traducción al español
+// del verbo (el infinitivo es el propio verbo). El significado se corrige con
+// meaningOk.
+function core(v) {
+  const f = formsOf(v)
+  return {
+    type: 'grid',
+    kind: 'core',
+    w: v,
+    rows: [{ label: v.en, fields: [0, 1, 2] }],
+    fields: [
+      { label: 'Pasado', a: f.past, w: v },
+      { label: 'Participio', a: f.pp, w: v },
+      { label: 'Significado', a: [v.es], w: v, mean: true },
+    ],
+  }
+}
+
+// El significado, para elegir entre cuatro (en los repasos, con los que fallas).
 function mean(v) {
   const opts = threeOf(
     others(v).map((x) => x.es),
     v.es,
   )
-  return { type: 'mcq', part: 'mean', dir: 'e2s', w: v, answer: v.es, options: shuffle([v.es, ...opts]) }
+  return { type: 'mcq', dir: 'e2s', w: v, answer: v.es, options: shuffle([v.es, ...opts]) }
 }
-// ...o el significado escrito en español (se corrige con meaningOk).
-const write = (v) => ({ type: 'meanw', part: 'mean', w: v })
-const meaningQ = (v) => (Math.random() < 0.5 ? mean(v) : write(v))
 
 // 2. Elige el verbo: la frase con hueco y cuatro verbos en la misma forma que
 // pide la frase (si es «argued», las otras opciones también van en pasado).
@@ -61,14 +78,14 @@ function pick(v) {
     cmp,
   )
   if (opts.length < 3) return null
-  return { type: 'pick', part: 'pick', w: v, m: v.m, answer: v.m.t, options: shuffle([v.m.t, ...opts]) }
+  return { type: 'pick', w: v, m: v.m, answer: v.m.t, options: shuffle([v.m.t, ...opts]) }
 }
 
 // 3. Escribe el verbo: el hueco dice en qué tiempo va (pasado simple, pasiva…).
 // En los verbos con preposición lo que se practica es la preposición: la pista
 // solo da el verbo y hay que escribir los dos.
 function cloze(v) {
-  const q = { type: 'cloze', part: 'cloze', w: v, m: v.m, tense: slotOf(v)?.tense }
+  const q = { type: 'cloze', w: v, m: v.m, tense: slotOf(v)?.tense }
   if (v.k === 'prep') return { ...q, help: 'Escribe el verbo en la forma correcta y su preposición.', base: v.en.split(' ')[0] + ' + prep.' }
   return { ...q, help: 'Escribe la forma correcta del verbo.', base: v.en }
 }
@@ -124,32 +141,14 @@ function tenses(v) {
   const keys = LEVELS[v.lv].tenses
   return {
     type: 'grid',
-    part: 'table',
     kind: 'tenses',
     w: v,
     rows: keys.map((k, i) => ({ label: TENSE_ROWS[k][0], sub: TENSE_ROWS[k][1], pre: s, fields: [i] })),
     fields: keys.map((k) => ({ a: ans[k], w: v, pre: s })),
   }
 }
-// Pasado y participio de los irregulares: todos los del día en una tabla, o
-// uno solo en los repasos.
-function forms(vs) {
-  return {
-    type: 'grid',
-    part: 'table',
-    kind: 'forms',
-    w: vs.length === 1 ? vs[0] : null,
-    cols: ['Pasado', 'Participio'],
-    rows: vs.map((v, i) => ({ label: v.en, sub: v.es, w: v, fields: [2 * i, 2 * i + 1] })),
-    fields: vs.flatMap((v) => [
-      { a: formsOf(v).past, w: v },
-      { a: formsOf(v).pp, w: v },
-    ]),
-  }
-}
-
 // 5. Completa el texto: el texto del día con un hueco por verbo.
-const textQ = (d) => ({ type: 'text', part: 'text', day: d.num, ...d.text })
+const textQ = (d) => ({ type: 'text', day: d.num, ...d.text })
 
 const missedOf = (stats, v) => stats[v.id]?.missed_count || 0
 const seenOf = (stats, v) => stats[v.id]?.last_seen || ''
@@ -163,16 +162,31 @@ function tableVerbs(vs, n, stats) {
     .slice(0, n)
 }
 
-// Una pregunta suelta de un tipo al azar (en los repasos). avoid: parte que no
-// debe repetirse cuando el verbo sale dos veces.
-function single(v, avoid) {
-  const kinds = [meaningQ, pick, cloze]
-  if (v.k === 'irr') kinds.push((x) => forms([x]))
-  for (const k of shuffle(kinds)) {
+// Pregunta de más para un verbo que fallas (en el repaso semanal): elegir su
+// significado, elegir el verbo de su frase o escribirlo.
+function extra(v) {
+  for (const k of shuffle([mean, pick, cloze])) {
     const q = k(v)
-    if (q && q.part !== avoid) return q
+    if (q) return q
   }
-  return mean(v)
+}
+
+// Baraja las preguntas sin poner ninguna antes que la de formas de su verbo:
+// así nada te enseña el pasado, el participio o la traducción antes de que los
+// escribas tú. Los textos salen cuando ya han salido las formas de sus verbos.
+const verbsIn = (q) => (q.type === 'text' ? q.fields.map((f) => f.w).filter(Boolean) : [q.w])
+function mixed(qs) {
+  const firsts = new Map(qs.filter((q) => q.kind === 'core').map((q) => [q.w, q]))
+  const placed = new Set()
+  const ready = (q) => q.kind === 'core' || verbsIn(q).every((w) => !firsts.has(w) || placed.has(firsts.get(w)))
+  const pool = shuffle(qs)
+  const out = []
+  while (pool.length) {
+    const [q] = pool.splice(pool.findIndex(ready), 1)
+    placed.add(q)
+    out.push(q)
+  }
+  return out
 }
 
 // Textos de los repasos: de días distintos, elegidos al azar entre los que
@@ -183,73 +197,66 @@ function reviewTexts(verbs) {
   const days = [...new Set(verbs.map((v) => v.day))].map(plan.planOf).filter((d) => d.text)
   return shuffle(days).slice(0, TEXTS)
 }
-const coveredBy = (days) => new Set(days.flatMap((d) => d.verbs.map((v) => v.id)))
 
-function withExtras(texts, verbs, stats, tableFrom) {
-  return [...texts.map(textQ), ...verbs.map((v) => single(v)), ...tableVerbs(tableFrom, 1, stats).map(tenses)]
+// Un repaso: las formas y el significado de cada verbo, dos textos y una tabla
+// de tiempos.
+function review(verbs, texts, stats, tableFrom) {
+  return [...verbs.map(core), ...texts.map(textQ), ...tableVerbs(tableFrom, 1, stats).map(tenses)]
 }
 
 // Preguntas de un día del plan (estudio, repaso semanal o mensual).
 export function planQuestions(p, stats) {
   if (p.type === 'learn') {
-    // Cada verbo sale una vez por su significado (elegirlo o escribirlo) y otra
-    // en su frase (elegir el verbo o escribirlo), mitad y mitad, para que la
-    // misma frase no salga dos veces.
+    // Cada verbo: sus formas y su significado, y su frase para elegir el verbo o
+    // escribirlo (mitad y mitad). Además, dos tablas de tiempos y el texto.
     const vs = p.verbs
-    const qs = [...shuffle(vs).map((v, i) => (i % 2 ? mean(v) : write(v))), ...shuffle(vs).map((v, i) => (i % 2 && pick(v)) || cloze(v))]
-    if (p.k === 'irr') qs.push(forms(vs))
-    qs.push(...tableVerbs(vs, p.k === 'irr' ? 1 : 2, stats).map(tenses))
+    const qs = [...vs.map(core), ...shuffle(vs).map((v, i) => (i % 2 && pick(v)) || cloze(v))]
+    qs.push(...tableVerbs(vs, 2, stats).map(tenses))
     if (p.text) qs.push(textQ(p))
-    return shuffle(qs)
+    return mixed(qs)
   }
   const texts = reviewTexts(p.verbs)
-  const covered = coveredBy(texts)
-  const rest = p.verbs.filter((v) => !covered.has(v.id))
   if (p.type === 'week') {
-    // Una pregunta por verbo (o su hueco en un texto), y otra más para los que fallas.
-    const qs = withExtras(texts, rest, stats, p.verbs)
-    p.verbs.filter(missed(stats)).forEach((v) => qs.push(single(v, qs.find((q) => q.w === v)?.part)))
-    return shuffle(qs)
+    // Todos los verbos de la semana, y otra pregunta para los que fallas.
+    return mixed([...review(p.verbs, texts, stats, p.verbs), ...p.verbs.filter(missed(stats)).map(extra)])
   }
   // Mensual: primero los que más fallas y el resto al azar, hasta CAP verbos.
-  const weak = rest.filter(missed(stats)).sort(byMissed(stats)).slice(0, 30)
-  const fill = shuffle(rest.filter((v) => !weak.includes(v))).slice(0, Math.max(0, CAP - covered.size - weak.length))
-  return shuffle(withExtras(texts, [...weak, ...fill], stats, weak.length ? weak : rest))
+  const weak = p.verbs.filter(missed(stats)).sort(byMissed(stats)).slice(0, 30)
+  const fill = shuffle(p.verbs.filter((v) => !weak.includes(v))).slice(0, CAP - weak.length)
+  return mixed(review([...weak, ...fill], texts, stats, weak.length ? weak : fill))
 }
 
 // Repaso acumulativo: todo lo estudiado, primero lo que más fallas y después lo
 // que llevas más tiempo sin ver (lo nunca preguntado cuenta como lo más antiguo).
 export function cumulativeQuestions(verbs, stats) {
-  const texts = reviewTexts(verbs)
-  const covered = coveredBy(texts)
-  const picked = shuffle(verbs.filter((v) => !covered.has(v.id)))
+  const picked = shuffle(verbs)
     .sort((a, b) => missedOf(stats, b) - missedOf(stats, a) || seenOf(stats, a).localeCompare(seenOf(stats, b)))
-    .slice(0, Math.max(0, CAP - covered.size))
-  return shuffle(withExtras(texts, picked, stats, picked.slice(0, 10)))
+    .slice(0, CAP)
+  return mixed(review(picked, reviewTexts(picked), stats, picked.slice(0, 10)))
 }
 
 export function missedQuestions(verbs, stats) {
   const weak = verbs.filter(missed(stats)).sort(byMissed(stats)).slice(0, CAP)
-  return shuffle(withExtras([], weak, stats, weak))
+  return mixed(review(weak, [], stats, weak))
 }
 
 // Preguntas de un día del plan y minutos aproximados, para avisar antes de
 // empezar: un texto o una tabla llevan más tiempo que escribir una respuesta, y
 // escribirla, más que elegirla.
-const MINUTES = { text: 3, grid: 1.5, cloze: 1 / 3, meanw: 1 / 3 }
+const MINUTES = { text: 3, tenses: 1.5, core: 1 / 3, cloze: 1 / 3 }
 export function examSize(p, stats) {
   const qs = planQuestions(p, stats)
-  return { n: qs.length, min: Math.max(5, Math.round(qs.reduce((m, q) => m + (MINUTES[q.type] || 1 / 6), 0))) }
+  return { n: qs.length, min: Math.max(5, Math.round(qs.reduce((m, q) => m + (MINUTES[q.kind || q.type] || 1 / 6), 0))) }
 }
 
 export function acceptedVerbAnswers(q) {
   return q.type === 'cloze' ? q.w.alts : [q.w.en]
 }
 
-// Corrección de las preguntas de varios huecos (tablas y textos): un acierto
-// o fallo por hueco.
+// Corrección de las preguntas de varios huecos (formas, tablas y textos): un
+// acierto o fallo por hueco.
 export function gradeFields(q, vals) {
-  return q.fields.map((f, i) => Boolean((vals[i] || '').trim()) && sameForm(vals[i], f.a, f.pre))
+  return q.fields.map((f, i) => Boolean((vals[i] || '').trim()) && (f.mean ? meaningOk(f.w, vals[i]) : sameForm(vals[i], f.a, f.pre)))
 }
 
 // Corrección del significado escrito: vale cualquiera de los de la lista, sin
